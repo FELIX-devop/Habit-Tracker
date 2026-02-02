@@ -73,7 +73,7 @@ export default function CalendarPage() {
     const blanks = Array.from({ length: startDay === 0 ? 6 : startDay - 1 }, (_, i) => i);
 
     return (
-        <div className="p-4 sm:p-8 h-full flex flex-col max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 pb-24">
+        <div className="p-4 sm:p-8 h-full flex flex-col max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32 sm:pb-24">
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
                 <div className="flex items-center gap-4">
@@ -98,7 +98,7 @@ export default function CalendarPage() {
             </div>
 
             {/* Calendar Container */}
-            <div className="premium-card glass flex-1 flex flex-col min-h-0 overflow-hidden">
+            <div className="premium-card glass sm:flex-1 flex flex-col min-h-0">
                 {/* Month Navigation */}
                 <div className="p-4 sm:p-6 border-b border-[var(--border)] flex flex-col sm:flex-row items-center justify-between gap-4 bg-[var(--surface-muted)]">
                     <div className="flex items-center gap-4">
@@ -127,9 +127,9 @@ export default function CalendarPage() {
                 </div>
 
                 {/* Weekday Names */}
-                <div className="grid grid-cols-7 border-b border-[var(--border)] bg-[var(--surface-muted)]">
+                <div className="grid grid-cols-7 border-b border-[var(--border)] bg-[var(--surface-muted)]/50">
                     {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
-                        <div key={d} className="p-2 sm:p-4 text-center text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-[0.1em] sm:tracking-[0.2em] border-r border-[var(--border)] last:border-0">
+                        <div key={d} className="py-3 sm:py-4 text-center text-[10px] font-black text-[var(--text-secondary)] uppercase tracking-widest border-r border-[var(--border)] last:border-0">
                             <span className="hidden sm:inline">{d}</span>
                             <span className="sm:hidden">{d[0]}</span>
                         </div>
@@ -137,10 +137,10 @@ export default function CalendarPage() {
                 </div>
 
                 {/* Grid */}
-                <div className="flex-1 overflow-y-auto custom-scrollbar">
-                    <div className="grid grid-cols-7 h-full">
+                <div className="sm:flex-1 sm:overflow-y-auto custom-scrollbar">
+                    <div className="grid grid-cols-7 sm:h-full border-b border-[var(--border)] sm:border-b-0">
                         {blanks.map(i => (
-                            <div key={`blank-${i}`} className="aspect-square sm:aspect-auto sm:min-h-[120px] p-4 border-r border-b border-[var(--border)] bg-[var(--surface-muted)] opacity-50" />
+                            <div key={`blank-${i}`} className="aspect-square sm:aspect-auto sm:min-h-[120px] border-r border-b border-[var(--border)] bg-[var(--surface-muted)]/20" />
                         ))}
                         {days.map(day => {
                             const isToday = day === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
@@ -149,25 +149,28 @@ export default function CalendarPage() {
                                     key={day}
                                     onClick={() => handleDateClick(day)}
                                     className={clsx(
-                                        "aspect-square sm:aspect-auto sm:min-h-[120px] p-2 sm:p-4 border-r border-b border-[var(--border)] text-left transition-all relative group flex flex-col gap-1",
-                                        "hover:bg-indigo-500/5 last:border-r-0 focus:outline-none touch-manipulation",
-                                        isToday ? "bg-indigo-500/[0.05]" : ""
+                                        "aspect-square sm:aspect-auto sm:min-h-[120px] p-2 sm:p-4 border-r border-b border-[var(--border)] text-left transition-all relative group flex flex-col gap-1 items-center sm:items-start justify-center sm:justify-start",
+                                        "hover:bg-indigo-500/5 last:border-r-0 focus:outline-none touch-manipulation sm:bg-transparent",
+                                        isToday ? "bg-indigo-500/[0.08]" : "bg-[var(--surface)] sm:bg-transparent"
                                     )}
                                 >
                                     <span className={clsx(
-                                        "text-base sm:text-lg font-black transition-colors",
-                                        isToday ? "text-indigo-500" : "text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]"
+                                        "text-sm sm:text-lg font-black transition-colors w-7 h-7 sm:w-auto sm:h-auto flex items-center justify-center rounded-full sm:rounded-none",
+                                        isToday ? "bg-indigo-500 text-white sm:bg-transparent sm:text-indigo-500" : "text-[var(--text-primary)] sm:text-[var(--text-secondary)] sm:group-hover:text-[var(--text-primary)]"
                                     )}>
                                         {day}
                                     </span>
                                     {isToday && (
-                                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_8px_#6366f1]" />
+                                        <div className="hidden sm:block w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_8px_#6366f1]" />
                                     )}
-                                    <div className="mt-auto flex gap-1">
+                                    <div className="mt-auto hidden sm:flex gap-1">
                                         <div className="w-1.5 h-1.5 rounded-full bg-[var(--surface-muted)] border border-[var(--border)]" />
                                         <div className="w-1.5 h-1.5 rounded-full bg-[var(--surface-muted)] border border-[var(--border)]" />
                                     </div>
-                                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
+                                    <div className="sm:hidden flex gap-0.5 mt-1">
+                                        <div className="w-1 h-1 rounded-full bg-indigo-500/40" />
+                                    </div>
+                                    <div className="absolute top-4 right-4 hidden sm:flex opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
                                         <div className="w-8 h-8 rounded-xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
                                             <Search className="w-3.5 h-3.5 text-indigo-500" />
                                         </div>
