@@ -85,4 +85,22 @@ public class HabitService {
 
         habitRepository.delete(habit);
     }
+
+    public Habit updateHabit(String habitId, String email, String newTitle) {
+        Habit habit = habitRepository.findById(habitId)
+                .orElseThrow(() -> new RuntimeException("Habit not found"));
+
+        User user = getUserByEmail(email);
+
+        if (!habit.getUserId().equals(user.getId())) {
+            throw new RuntimeException("Unauthorized access to habit");
+        }
+
+        if (newTitle == null || newTitle.trim().isEmpty()) {
+            throw new IllegalArgumentException("Habit title cannot be empty");
+        }
+
+        habit.setTitle(newTitle.trim());
+        return habitRepository.save(habit);
+    }
 }

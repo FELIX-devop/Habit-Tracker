@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Plus, Check, Loader2, Trash2, ArrowLeft, Calendar as CalendarIcon } from 'lucide-react';
+import { Plus, Check, Loader2, Trash2, ArrowLeft, Calendar as CalendarIcon, Edit2, X, Save } from 'lucide-react';
 import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import api from '../api/api';
@@ -32,6 +32,9 @@ export default function DateHabitsPage() {
         fetchHabits();
     }, []);
 
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editingName, setEditingName] = useState('');
+
     const fetchHabits = async () => {
         try {
             const res = await api.get<Habit[]>('/habits');
@@ -40,6 +43,24 @@ export default function DateHabitsPage() {
             console.error(e);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const updateHabitTitle = async (id: string) => {
+        if (!editingName.trim()) {
+            setEditingId(null);
+            return;
+        }
+
+        const previousHabits = [...habits];
+        setHabits(prev => prev.map(h => h.id === id ? { ...h, title: editingName } : h));
+
+        try {
+            await api.put(`/habits/${id}`, { title: editingName });
+            setEditingId(null);
+        } catch (e: any) {
+            setHabits(previousHabits);
+            alert(`Error: ${e.response?.data || "Failed to update habit"}`);
         }
     };
 
@@ -194,14 +215,44 @@ export default function DateHabitsPage() {
                                         isChecked ? "scale-100 opacity-100" : "scale-50 opacity-0"
                                     )} strokeWidth={3} />
                                 </button>
-                                <span className="flex-1 text-neutral-200 font-medium">{habit.title}</span>
-                                <button
-                                    onClick={() => deleteHabit(habit.id, habit.title)}
-                                    className="opacity-0 group-hover:opacity-100 transition-opacity text-neutral-500 hover:text-red-500 p-1 rounded hover:bg-red-500/10"
-                                    title="Delete habit"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
+
+                                {editingId === habit.id ? (
+                                    <div className="flex-1 flex items-center gap-2">
+                                        <input
+                                            autoFocus
+                                            className="bg-neutral-800 text-white px-2 py-1 rounded border border-blue-500 outline-none flex-1"
+                                            value={editingName}
+                                            onChange={e => setEditingName(e.target.value)}
+                                            onKeyDown={e => e.key === 'Enter' && updateHabitTitle(habit.id)}
+                                        />
+                                        <button onClick={() => updateHabitTitle(habit.id)} className="text-green-500 p-1 hover:bg-green-500/10 rounded">
+                                            <Save className="w-4 h-4" />
+                                        </button>
+                                        <button onClick={() => setEditingId(null)} className="text-neutral-500 p-1 hover:bg-neutral-500/10 rounded">
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <span className="flex-1 text-neutral-200 font-medium">{habit.title}</span>
+                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button
+                                                onClick={() => { setEditingId(habit.id); setEditingName(habit.title); }}
+                                                className="text-neutral-500 hover:text-blue-500 p-1 rounded hover:bg-blue-500/10"
+                                                title="Edit habit name"
+                                            >
+                                                <Edit2 className="w-4 h-4" />
+                                            </button>
+                                            <button
+                                                onClick={() => deleteHabit(habit.id, habit.title)}
+                                                className="text-neutral-500 hover:text-red-500 p-1 rounded hover:bg-red-500/10"
+                                                title="Delete habit"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         );
                     })}

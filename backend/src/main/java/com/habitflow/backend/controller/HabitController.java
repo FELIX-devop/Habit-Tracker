@@ -1,6 +1,7 @@
 package com.habitflow.backend.controller;
 
 import com.habitflow.backend.dto.HabitRequest;
+import com.habitflow.backend.dto.UpdateHabitRequest;
 import com.habitflow.backend.model.Habit;
 import com.habitflow.backend.service.HabitService;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,18 @@ public class HabitController {
         try {
             habitService.deleteHabit(id, authentication.getName());
             return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(403).body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateHabit(@PathVariable String id, @RequestBody UpdateHabitRequest request,
+            Authentication authentication) {
+        try {
+            return ResponseEntity.ok(habitService.updateHabit(id, authentication.getName(), request.getTitle()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (RuntimeException e) {
             return ResponseEntity.status(403).body(e.getMessage());
         }
