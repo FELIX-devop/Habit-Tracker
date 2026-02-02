@@ -1,10 +1,7 @@
 import { useState } from 'react';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, ArrowLeft, Search, Layers } from 'lucide-react';
 import clsx from 'clsx';
-
-const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
 export default function CalendarPage() {
     const navigate = useNavigate();
@@ -12,13 +9,10 @@ export default function CalendarPage() {
     const [currentMonth, setCurrentMonth] = useState(today.getMonth());
     const [currentYear, setCurrentYear] = useState(today.getFullYear());
 
-    const getDaysInMonth = (month: number, year: number) => {
-        return new Date(year, month + 1, 0).getDate();
-    };
+    const daysInMonth = (month: number, year: number) => new Date(year, month + 1, 0).getDate();
+    const firstDayOfMonth = (month: number, year: number) => new Date(year, month, 1).getDay();
 
-    const getFirstDayOfMonth = (month: number, year: number) => {
-        return new Date(year, month, 1).getDay();
-    };
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
     const handlePrevMonth = () => {
         if (currentMonth === 0) {
@@ -38,17 +32,24 @@ export default function CalendarPage() {
         }
     };
 
+    const getLocalDateString = (d: Date) => {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
     const handleDateClick = (day: number) => {
         const selectedDate = new Date(currentYear, currentMonth, day);
-        const dateStr = selectedDate.toISOString().split('T')[0];
-        navigate(`/habits/${dateStr}`);
+        navigate(`/habits/${getLocalDateString(selectedDate)}`);
     };
 
     const handleGoToDate = () => {
-        const dateInput = prompt("Enter date (YYYY-MM-DD):", today.toISOString().split('T')[0]);
+        const dateInput = prompt("Enter date (YYYY-MM-DD):", getLocalDateString(today));
         if (dateInput) {
             try {
-                const date = new Date(dateInput);
+                const [y, m, d] = dateInput.split('-').map(Number);
+                const date = new Date(y, m - 1, d);
                 if (isNaN(date.getTime())) {
                     alert("Invalid date format");
                     return;
@@ -60,125 +61,138 @@ export default function CalendarPage() {
         }
     };
 
-    const daysInMonth = getDaysInMonth(currentMonth, currentYear);
-    const firstDay = getFirstDayOfMonth(currentMonth, currentYear);
-    const days = [];
-
-    // Empty cells for days before the first day of the month
-    for (let i = 0; i < firstDay; i++) {
-        days.push(<div key={`empty-${i}`} className="aspect-square" />);
-    }
-
-    // Actual days of the month
-    for (let day = 1; day <= daysInMonth; day++) {
-        const date = new Date(currentYear, currentMonth, day);
-        const isToday = date.toDateString() === today.toDateString();
-        const isPast = date < today && !isToday;
-        const isFuture = date > today;
-
-        days.push(
-            <button
-                key={day}
-                onClick={() => handleDateClick(day)}
-                className={clsx(
-                    "aspect-square rounded-lg flex items-center justify-center font-medium transition-all relative group",
-                    isToday && "bg-blue-600 text-white shadow-lg shadow-blue-600/30 scale-105",
-                    !isToday && "hover:bg-neutral-800 text-neutral-300 hover:scale-105",
-                    isPast && "text-neutral-600",
-                    isFuture && "text-neutral-400"
-                )}
-            >
-                {day}
-                {isToday && (
-                    <div className="absolute -bottom-1 w-1 h-1 rounded-full bg-white" />
-                )}
-            </button>
-        );
-    }
+    const daysCount = daysInMonth(currentMonth, currentYear);
+    const startDay = firstDayOfMonth(currentMonth, currentYear);
+    const days = Array.from({ length: daysCount }, (_, i) => i + 1);
+    // Adjust startDay for Monday-first calendar (0=Sunday, 1=Monday, ..., 6=Saturday)
+    // If startDay is Sunday (0), it should be 6 blanks for Monday start.
+    // Otherwise, it's startDay - 1 blanks.
+    const blanks = Array.from({ length: startDay === 0 ? 6 : startDay - 1 }, (_, i) => i);
 
     return (
-        <div className="p-8 h-full overflow-y-auto max-w-4xl mx-auto animate-in fade-in duration-500">
-            <div className="mb-8">
-                <h1 className="text-3xl font-semibold text-white tracking-tight">Calendar</h1>
-                <p className="text-neutral-500 mt-1">Select a date to view and manage habits</p>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                <button
-                    onClick={() => navigate(`/habits/${today.toISOString().split('T')[0]}`)}
-                    className="flex items-center gap-3 p-4 bg-gradient-to-br from-blue-600/20 to-blue-800/20 border border-blue-600/30 rounded-xl hover:from-blue-600/30 hover:to-blue-800/30 transition-all group"
-                >
-                    <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <CalendarIcon className="w-5 h-5 text-white" />
+        <div className="p-4 sm:p-8 h-full flex flex-col max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 pb-24">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => navigate('/tasks')}
+                        className="p-3 rounded-xl glass hover:bg-[var(--surface-hover)] transition-all text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                    >
+                        <ArrowLeft className="w-5 h-5" />
+                    </button>
+                    <div>
+                        <h1 className="text-3xl sm:text-5xl font-bold text-[var(--text-primary)] tracking-tight leading-tight">Calendar</h1>
+                        <p className="text-[var(--text-secondary)] text-sm sm:text-base font-medium">Navigate your habit history.</p>
                     </div>
-                    <div className="text-left">
-                        <div className="text-white font-medium">Today's Habits</div>
-                        <div className="text-blue-300 text-sm">{today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</div>
-                    </div>
-                </button>
-
+                </div>
                 <button
                     onClick={handleGoToDate}
-                    className="flex items-center gap-3 p-4 bg-gradient-to-br from-purple-600/20 to-purple-800/20 border border-purple-600/30 rounded-xl hover:from-purple-600/30 hover:to-purple-800/30 transition-all group"
+                    className="px-6 py-3 rounded-xl glass hover:bg-[var(--surface-hover)] transition-all text-sm font-bold text-[var(--text-primary)] flex items-center justify-center gap-2"
                 >
-                    <div className="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <CalendarIcon className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="text-left">
-                        <div className="text-white font-medium">Go To Date</div>
-                        <div className="text-purple-300 text-sm">Jump to specific date</div>
-                    </div>
+                    <Search className="w-4 h-4" />
+                    Jump to Date
                 </button>
             </div>
 
-            {/* Calendar */}
-            <div className="bg-[var(--color-habit-card)] border border-[var(--color-habit-border)] rounded-2xl p-6 shadow-2xl">
+            {/* Calendar Container */}
+            <div className="premium-card glass flex-1 flex flex-col min-h-0 overflow-hidden">
                 {/* Month Navigation */}
-                <div className="flex items-center justify-between mb-6">
-                    <button
-                        onClick={handlePrevMonth}
-                        className="p-2 hover:bg-neutral-800 rounded-lg transition-colors"
-                    >
-                        <ChevronLeft className="w-5 h-5 text-neutral-400" />
-                    </button>
-                    <h2 className="text-xl font-semibold text-white">
-                        {MONTHS[currentMonth]} {currentYear}
-                    </h2>
-                    <button
-                        onClick={handleNextMonth}
-                        className="p-2 hover:bg-neutral-800 rounded-lg transition-colors"
-                    >
-                        <ChevronRight className="w-5 h-5 text-neutral-400" />
-                    </button>
+                <div className="p-6 border-b border-[var(--border)] flex items-center justify-between bg-[var(--surface-muted)]">
+                    <div className="flex items-center gap-4">
+                        <h2 className="text-xl sm:text-2xl font-black text-[var(--text-primary)] whitespace-nowrap">
+                            {monthNames[currentMonth]} <span className="text-[var(--text-secondary)] font-medium leading-none ml-1">{currentYear}</span>
+                        </h2>
+                    </div>
+                    <div className="flex gap-2">
+                        <button onClick={handlePrevMonth} className="p-3 rounded-xl glass hover:bg-[var(--surface-hover)] transition-all text-[var(--text-primary)]">
+                            <ChevronLeft className="w-5 h-5" />
+                        </button>
+                        <button onClick={() => { setCurrentMonth(today.getMonth()); setCurrentYear(today.getFullYear()); }} className="px-5 py-2 rounded-xl border border-indigo-500/20 bg-indigo-500/5 hover:bg-indigo-500/10 transition-all text-[10px] uppercase tracking-widest font-black text-indigo-500">
+                            Today
+                        </button>
+                        <button onClick={handleNextMonth} className="p-3 rounded-xl glass hover:bg-[var(--surface-hover)] transition-all text-[var(--text-primary)]">
+                            <ChevronRight className="w-5 h-5" />
+                        </button>
+                    </div>
                 </div>
 
-                {/* Day Headers */}
-                <div className="grid grid-cols-7 gap-2 mb-2">
-                    {DAYS_OF_WEEK.map(day => (
-                        <div key={day} className="text-center text-sm font-medium text-neutral-500 py-2">
-                            {day}
+                {/* Weekday Names */}
+                <div className="grid grid-cols-7 border-b border-[var(--border)] bg-[var(--surface-muted)]">
+                    {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(d => (
+                        <div key={d} className="p-4 text-center text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-[0.2em] border-r border-[var(--border)] last:border-0">
+                            {d}
                         </div>
                     ))}
                 </div>
 
-                {/* Calendar Grid */}
-                <div className="grid grid-cols-7 gap-2">
-                    {days}
+                {/* Grid */}
+                <div className="flex-1 overflow-y-auto custom-scrollbar">
+                    <div className="grid grid-cols-7 h-full">
+                        {blanks.map(i => (
+                            <div key={`blank-${i}`} className="aspect-square sm:aspect-auto sm:min-h-[120px] p-4 border-r border-b border-[var(--border)] bg-[var(--surface-muted)] opacity-50" />
+                        ))}
+                        {days.map(day => {
+                            const isToday = day === today.getDate() && currentMonth === today.getMonth() && currentYear === today.getFullYear();
+                            return (
+                                <button
+                                    key={day}
+                                    onClick={() => handleDateClick(day)}
+                                    className={clsx(
+                                        "aspect-square sm:aspect-auto sm:min-h-[120px] p-4 border-r border-b border-[var(--border)] text-left transition-all relative group flex flex-col gap-1",
+                                        "hover:bg-indigo-500/5 last:border-r-0",
+                                        isToday ? "bg-indigo-500/[0.03]" : ""
+                                    )}
+                                >
+                                    <span className={clsx(
+                                        "text-base sm:text-lg font-black transition-colors",
+                                        isToday ? "text-indigo-500" : "text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]"
+                                    )}>
+                                        {day}
+                                    </span>
+                                    {isToday && (
+                                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_8px_#6366f1]" />
+                                    )}
+                                    <div className="mt-auto flex gap-1">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-[var(--surface-muted)] border border-[var(--border)]" />
+                                        <div className="w-1.5 h-1.5 rounded-full bg-[var(--surface-muted)] border border-[var(--border)]" />
+                                    </div>
+                                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
+                                        <div className="w-8 h-8 rounded-xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
+                                            <Search className="w-3.5 h-3.5 text-indigo-500" />
+                                        </div>
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
 
-            {/* Legend */}
-            <div className="mt-6 flex items-center justify-center gap-6 text-sm text-neutral-500">
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-blue-600" />
-                    <span>Today</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-neutral-800" />
-                    <span>Other Days</span>
+            {/* Quick Actions Footer */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
+                <button
+                    onClick={() => navigate(`/habits/${getLocalDateString(today)}`)}
+                    className="p-6 premium-card bg-gradient-to-br from-indigo-500/10 to-transparent flex items-center gap-6 group"
+                >
+                    <div className="w-14 h-14 rounded-2xl bg-indigo-500/20 flex items-center justify-center text-indigo-500 group-hover:scale-110 transition-transform">
+                        <CalendarIcon className="w-7 h-7" />
+                    </div>
+                    <div className="text-left">
+                        <div className="text-lg font-black text-[var(--text-primary)] mb-0.5 group-hover:text-indigo-500 transition-colors">Go to Today</div>
+                        <div className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-widest text-[10px]">Active Protocol</div>
+                    </div>
+                </button>
+                <div className="p-6 premium-card flex items-center gap-6">
+                    <div className="w-14 h-14 rounded-2xl bg-[var(--surface-muted)] border border-[var(--border)] flex items-center justify-center text-[var(--text-secondary)]">
+                        <Layers className="w-7 h-7" />
+                    </div>
+                    <div className="text-left">
+                        <div className="text-lg font-black text-[var(--text-primary)] mb-0.5">{daysCount} Days</div>
+                        <div className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-widest text-[10px]">{monthNames[currentMonth]} {currentYear}</div>
+                    </div>
                 </div>
             </div>
+
         </div>
     );
 }

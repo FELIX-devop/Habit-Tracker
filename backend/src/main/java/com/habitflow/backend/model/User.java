@@ -19,7 +19,15 @@ public class User {
     @Indexed(unique = true)
     private String email;
 
+    @Indexed(unique = true)
+    private String username;
+
     private String password;
+    private String name;
+    private String age;
+    private String height;
+    private String weight;
+    private String profilePicture;
 
     @CreatedDate
     private Instant createdAt;
@@ -27,5 +35,6 @@ public class User {
     public User(String email, String password) {
         this.email = email;
         this.password = password;
+        this.username = email.split("@")[0]; // Default username
     }
 }

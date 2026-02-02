@@ -19,14 +19,26 @@ export default function DateHabitsPage() {
     const [adding, setAdding] = useState(false);
     const [newHabitName, setNewHabitName] = useState('');
 
-    const selectedDate = date ? new Date(date) : new Date();
-    const dateStr = selectedDate.toISOString().split('T')[0];
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
+    const getLocalDateString = (d: Date) => {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
 
-    const isPast = selectedDate < today && dateStr !== todayStr;
+    const getSelectedDate = () => {
+        if (!date) return new Date();
+        const [year, month, day] = date.split('-').map(Number);
+        return new Date(year, month - 1, day);
+    };
+
+    const selectedDate = getSelectedDate();
+    const dateStr = getLocalDateString(selectedDate);
+    const today = new Date();
+    const todayStr = getLocalDateString(today);
+
+    const isPast = selectedDate.getTime() < new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
     const isToday = dateStr === todayStr;
-    const isFuture = selectedDate > today;
 
     useEffect(() => {
         fetchHabits();
@@ -87,13 +99,9 @@ export default function DateHabitsPage() {
     };
 
     const toggleHabit = async (id: string) => {
-        // Only allow toggling for today
         if (!isToday) {
-            if (isPast) {
-                alert("Past dates are read-only. You cannot mark habits as complete for past dates.");
-            } else {
-                alert("You cannot mark habits as complete for future dates.");
-            }
+            if (isPast) alert("Past dates are read-only.");
+            else alert("You cannot mark habits as complete for future dates.");
             return;
         }
 
@@ -132,9 +140,7 @@ export default function DateHabitsPage() {
     };
 
     const deleteHabit = async (id: string, title: string) => {
-        if (!confirm(`Are you sure you want to delete "${title}"? This will remove all related logs.`)) {
-            return;
-        }
+        if (!confirm(`Are you sure you want to delete "${title}"?`)) return;
 
         const previousHabits = [...habits];
         setHabits(prev => prev.filter(h => h.id !== id));
@@ -147,86 +153,88 @@ export default function DateHabitsPage() {
         }
     };
 
-    if (loading) return <div className="h-full flex items-center justify-center text-neutral-500"><Loader2 className="animate-spin" /></div>;
+    if (loading) return (
+        <div className="h-full flex flex-col items-center justify-center text-neutral-500 gap-4">
+            <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+        </div>
+    );
 
     const completedCount = habits.filter(h => h.logs[dateStr]).length;
     const totalCount = habits.length;
     const completionRate = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
     return (
-        <div className="p-8 h-full flex flex-col max-w-4xl mx-auto animate-in fade-in duration-500">
+        <div className="p-4 sm:p-8 h-full flex flex-col max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 pb-24">
             {/* Header */}
-            <div className="flex items-center gap-4 mb-6">
+            <div className="flex items-center gap-6 mb-10">
                 <button
                     onClick={() => navigate('/calendar')}
-                    className="p-2 hover:bg-neutral-800 rounded-lg transition-colors"
+                    className="p-3 rounded-xl glass hover:bg-[var(--surface-hover)] transition-all text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                 >
-                    <ArrowLeft className="w-5 h-5 text-neutral-400" />
+                    <ArrowLeft className="w-5 h-5" />
                 </button>
                 <div className="flex-1">
-                    <h1 className="text-2xl font-semibold text-white tracking-tight">
-                        {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                    <h1 className="text-2xl sm:text-4xl font-black text-[var(--text-primary)] tracking-tight">
+                        {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                     </h1>
-                    <p className="text-neutral-500 mt-1">
-                        {isToday && "Today - You can mark habits as complete"}
-                        {isPast && "Past date - View only, cannot mark as complete"}
-                        {isFuture && "Future date - You can plan habits"}
+                    <p className="text-[var(--text-secondary)] text-sm font-bold uppercase tracking-widest mt-1">
+                        {isToday ? "Make today count" : isPast ? "Historical Archives" : "Upcoming Protocol"}
                     </p>
                 </div>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
-                <div className="bg-gradient-to-br from-blue-600/20 to-blue-800/20 border border-blue-600/30 rounded-xl p-4">
-                    <div className="text-blue-400 text-sm font-medium mb-1">Total Habits</div>
-                    <div className="text-2xl font-bold text-white">{totalCount}</div>
+            {/* Quick Stats Grid */}
+            <div className="grid grid-cols-3 gap-3 sm:gap-6 mb-10">
+                <div className="p-4 sm:p-6 premium-card bg-gradient-to-br from-indigo-500/10 to-transparent">
+                    <h4 className="text-indigo-500 text-[10px] sm:text-xs font-bold mb-1 uppercase tracking-widest leading-none">Total</h4>
+                    <p className="text-xl sm:text-4xl font-black text-[var(--text-primary)] leading-none mt-1">{totalCount}</p>
                 </div>
-                <div className="bg-gradient-to-br from-green-600/20 to-green-800/20 border border-green-600/30 rounded-xl p-4">
-                    <div className="text-green-400 text-sm font-medium mb-1">Completed</div>
-                    <div className="text-2xl font-bold text-white">{completedCount}</div>
+                <div className="p-4 sm:p-6 premium-card bg-gradient-to-br from-emerald-500/10 to-transparent">
+                    <h4 className="text-emerald-500 text-[10px] sm:text-xs font-bold mb-1 uppercase tracking-widest leading-none">Done</h4>
+                    <p className="text-xl sm:text-4xl font-black text-[var(--text-primary)] leading-none mt-1">{completedCount}</p>
                 </div>
-                <div className="bg-gradient-to-br from-purple-600/20 to-purple-800/20 border border-purple-600/30 rounded-xl p-4">
-                    <div className="text-purple-400 text-sm font-medium mb-1">Progress</div>
-                    <div className="text-2xl font-bold text-white">{completionRate}%</div>
+                <div className="p-4 sm:p-6 premium-card bg-gradient-to-br from-violet-500/10 to-transparent">
+                    <h4 className="text-violet-500 text-[10px] sm:text-xs font-bold mb-1 uppercase tracking-widest leading-none">Score</h4>
+                    <p className="text-xl sm:text-4xl font-black text-[var(--text-primary)] leading-none mt-1">{completionRate}%</p>
                 </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="grid grid-cols-2 gap-4 mb-10">
                 <button
                     onClick={() => setAdding(true)}
-                    className="flex items-center justify-center gap-2 p-3 bg-gradient-to-br from-blue-600/20 to-blue-800/20 border border-blue-600/30 rounded-xl hover:from-blue-600/30 hover:to-blue-800/30 transition-all"
+                    className="flex items-center justify-center gap-2 p-4 sm:p-5 premium-card hover:bg-[var(--surface-hover)] transition-all text-sm font-bold text-[var(--text-primary)] group"
                 >
-                    <Plus className="w-4 h-4 text-blue-400" />
-                    <span className="text-white font-medium">Add Habit</span>
+                    <Plus className="w-5 h-5 text-[var(--accent)] group-hover:rotate-90 transition-transform" />
+                    Add Habit
                 </button>
                 <div className="relative">
                     <button
                         onClick={() => setShowTemplates(!showTemplates)}
-                        className="w-full flex items-center justify-center gap-2 p-3 bg-gradient-to-br from-purple-600/20 to-purple-800/20 border border-purple-600/30 rounded-xl hover:from-purple-600/30 hover:to-purple-800/30 transition-all"
+                        className="w-full flex items-center justify-center gap-2 p-4 sm:p-5 premium-card hover:bg-[var(--surface-hover)] transition-all text-sm font-bold text-[var(--text-primary)]"
                     >
-                        <Layers className="w-4 h-4 text-purple-400" />
-                        <span className="text-white font-medium">Use Template</span>
+                        <Layers className="w-5 h-5 text-violet-500" />
+                        Use Template
                     </button>
 
                     {showTemplates && (
-                        <div className="absolute top-full left-0 w-full mt-2 bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl z-20 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                        <div className="absolute top-full left-0 w-full mt-3 glass rounded-2xl shadow-2xl z-20 overflow-hidden animate-in fade-in slide-in-from-top-2">
                             {templates.length > 0 ? (
-                                <div className="p-1">
+                                <div className="p-2 max-h-[300px] overflow-y-auto custom-scrollbar bg-[var(--surface)]">
                                     {templates.map(t => (
                                         <button
                                             key={t.id}
                                             onClick={() => applyTemplate(t.id)}
-                                            className="w-full text-left px-4 py-3 hover:bg-neutral-800 text-neutral-200 text-sm transition-colors rounded-lg flex flex-col"
+                                            className="w-full text-left px-5 py-4 hover:bg-[var(--surface-hover)] text-[var(--text-primary)] text-sm transition-colors rounded-xl flex flex-col gap-1"
                                         >
-                                            <span className="font-medium">{t.name}</span>
-                                            <span className="text-xs text-neutral-500">{t.habitTitles.length} habits</span>
+                                            <span className="font-bold">{t.name}</span>
+                                            <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-widest font-bold">{t.habitTitles.length} habits</span>
                                         </button>
                                     ))}
                                 </div>
                             ) : (
-                                <div className="p-4 text-center text-xs text-neutral-500">
-                                    No templates found. Create one in the Templates page.
+                                <div className="p-8 text-center text-xs font-bold text-[var(--text-secondary)] uppercase tracking-widest bg-[var(--surface)]">
+                                    No templates found
                                 </div>
                             )}
                         </div>
@@ -234,9 +242,9 @@ export default function DateHabitsPage() {
                 </div>
             </div>
 
-            {/* Habits List */}
-            <div className="bg-[var(--color-habit-card)] rounded-2xl border border-[var(--color-habit-border)] shadow-2xl overflow-hidden flex-1">
-                <div className="p-6 space-y-3 overflow-y-auto custom-scrollbar max-h-full">
+            {/* Habits List Container */}
+            <div className="premium-card glass flex-1 flex flex-col min-h-0 overflow-hidden">
+                <div className="p-4 sm:p-6 space-y-3 overflow-y-auto custom-scrollbar flex-1">
                     {habits.map((habit) => {
                         const isChecked = !!habit.logs?.[dateStr];
                         const canToggle = isToday;
@@ -244,56 +252,54 @@ export default function DateHabitsPage() {
                         return (
                             <div
                                 key={habit.id}
-                                className="flex items-center gap-4 p-4 bg-neutral-900/50 rounded-xl border border-neutral-800 hover:border-neutral-700 transition-all group"
+                                className="flex items-center gap-4 p-5 rounded-2xl border border-[var(--border)] bg-[var(--surface-muted)] hover:bg-[var(--surface-hover)] transition-all group"
                             >
                                 <button
                                     onClick={() => toggleHabit(habit.id)}
                                     disabled={!canToggle}
                                     className={twMerge(
-                                        "w-8 h-8 rounded-full border flex items-center justify-center transition-all duration-300 flex-shrink-0",
+                                        "w-10 h-10 rounded-2xl border-2 flex items-center justify-center transition-all duration-300",
                                         isChecked
-                                            ? "bg-blue-600 border-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.3)]"
-                                            : "border-neutral-700 bg-neutral-800/30",
-                                        canToggle ? "hover:border-neutral-500 hover:bg-neutral-800 cursor-pointer" : "cursor-not-allowed opacity-50"
+                                            ? "bg-[var(--accent)] border-[var(--accent)] shadow-lg shadow-indigo-600/30 scale-105"
+                                            : "border-[var(--border)] bg-[var(--surface)] hover:border-[var(--text-secondary)]",
+                                        !canToggle && "opacity-20 grayscale pointer-events-none"
                                     )}
                                 >
                                     <Check className={clsx(
-                                        "w-4 h-4 text-white transition-all duration-300",
+                                        "w-5 h-5 text-white transition-all duration-300",
                                         isChecked ? "scale-100 opacity-100" : "scale-50 opacity-0"
-                                    )} strokeWidth={3} />
+                                    )} strokeWidth={4} />
                                 </button>
 
                                 {editingId === habit.id ? (
                                     <div className="flex-1 flex items-center gap-2">
                                         <input
                                             autoFocus
-                                            className="bg-neutral-800 text-white px-2 py-1 rounded border border-blue-500 outline-none flex-1"
+                                            className="bg-[var(--surface)] text-[var(--text-primary)] px-4 py-2 rounded-xl border border-[var(--accent)] outline-none flex-1 font-bold"
                                             value={editingName}
                                             onChange={e => setEditingName(e.target.value)}
                                             onKeyDown={e => e.key === 'Enter' && updateHabitTitle(habit.id)}
                                         />
-                                        <button onClick={() => updateHabitTitle(habit.id)} className="text-green-500 p-1 hover:bg-green-500/10 rounded">
-                                            <Save className="w-4 h-4" />
+                                        <button onClick={() => updateHabitTitle(habit.id)} className="text-emerald-500 p-2 hover:bg-emerald-500/10 rounded-lg">
+                                            <Save className="w-5 h-5" />
                                         </button>
-                                        <button onClick={() => setEditingId(null)} className="text-neutral-500 p-1 hover:bg-neutral-500/10 rounded">
-                                            <X className="w-4 h-4" />
+                                        <button onClick={() => setEditingId(null)} className="text-[var(--text-secondary)] p-2 hover:bg-[var(--surface-hover)] rounded-lg">
+                                            <X className="w-5 h-5" />
                                         </button>
                                     </div>
                                 ) : (
                                     <>
-                                        <span className="flex-1 text-neutral-200 font-medium">{habit.title}</span>
-                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <span className="flex-1 text-[var(--text-primary)] font-black leading-tight truncate">{habit.title}</span>
+                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
                                             <button
                                                 onClick={() => { setEditingId(habit.id); setEditingName(habit.title); }}
-                                                className="text-neutral-500 hover:text-blue-500 p-1 rounded hover:bg-blue-500/10"
-                                                title="Edit habit name"
+                                                className="text-[var(--text-secondary)] hover:text-indigo-400 p-2 rounded-lg hover:bg-indigo-400/10"
                                             >
                                                 <Edit2 className="w-4 h-4" />
                                             </button>
                                             <button
                                                 onClick={() => deleteHabit(habit.id, habit.title)}
-                                                className="text-neutral-500 hover:text-red-500 p-1 rounded hover:bg-red-500/10"
-                                                title="Delete habit"
+                                                className="text-[var(--text-secondary)] hover:text-rose-500 p-2 rounded-lg hover:bg-rose-500/10"
                                             >
                                                 <Trash2 className="w-4 h-4" />
                                             </button>
@@ -304,14 +310,13 @@ export default function DateHabitsPage() {
                         );
                     })}
 
-                    {/* New Habit Input */}
                     {adding && (
-                        <div className="p-4 bg-neutral-900/50 rounded-xl border border-blue-500 animate-in fade-in slide-in-from-top-2">
+                        <div className="p-4 rounded-2xl border border-[var(--accent)] bg-[var(--surface-muted)] animate-in slide-in-from-top-4">
                             <form onSubmit={addHabit}>
                                 <input
                                     autoFocus
-                                    className="bg-neutral-800 text-white px-3 py-2 rounded w-full border border-blue-500 outline-none"
-                                    placeholder="Habit Name..."
+                                    className="bg-transparent text-[var(--text-primary)] px-4 py-2 w-full outline-none font-black placeholder:text-[var(--text-secondary)]"
+                                    placeholder="Add a new habit..."
                                     value={newHabitName}
                                     onChange={e => setNewHabitName(e.target.value)}
                                     onBlur={() => !newHabitName && setAdding(false)}
@@ -321,8 +326,11 @@ export default function DateHabitsPage() {
                     )}
 
                     {!loading && habits.length === 0 && !adding && (
-                        <div className="p-10 text-center text-neutral-500">
-                            No habits found. Start by creating one.
+                        <div className="py-24 flex flex-col items-center gap-6 text-[var(--text-secondary)]">
+                            <div className="w-20 h-20 rounded-full bg-[var(--surface-muted)] flex items-center justify-center border border-[var(--border)]">
+                                <Plus className="w-8 h-8 opacity-20" />
+                            </div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em]">No habits tracked on this date</p>
                         </div>
                     )}
                 </div>

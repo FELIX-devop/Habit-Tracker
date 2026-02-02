@@ -23,7 +23,14 @@ const getDaysOfWeek = () => {
 
 const DAYS = getDaysOfWeek();
 const TODAY_STR = new Date().toDateString(); // For UI highlighting
-const TODAY_ISO = new Date().toISOString().split('T')[0]; // For strict API validation
+const getLocalDateString = (d: Date) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+const TODAY_ISO = getLocalDateString(new Date()); // For strict API validation
 
 interface Habit {
     id: string;
@@ -54,16 +61,11 @@ export default function TaskPage() {
     };
 
     const toggleHabit = async (id: string, dateObj: Date) => {
-        // Optimistic Update
-        const dateStrKey = dateObj.toISOString().split('T')[0]; // YYYY-MM-DD
-
-        // Strict Validation Check (Frontend side pre-check)
+        const dateStrKey = getLocalDateString(dateObj);
         if (dateStrKey > TODAY_ISO) {
             alert("Cannot update future dates!");
             return;
         }
-        // Only today allow toggle?
-        // User Requirement: "Rules: Only TODAY’s date is allowed for checklist updates."
         if (dateStrKey !== TODAY_ISO) {
             alert("You can only update the status for TODAY. Past dates are read-only.");
             return;
@@ -81,7 +83,6 @@ export default function TaskPage() {
         try {
             await api.post(`/habits/${id}/toggle`, null, { params: { date: dateStrKey } });
         } catch (e: any) {
-            // Revert on error
             setHabits(previousHabits);
             alert(`Error: ${e.response?.data || "Failed to update"}`);
         }
@@ -120,172 +121,188 @@ export default function TaskPage() {
         }
     };
 
-    if (loading) return <div className="h-full flex items-center justify-center text-neutral-500"><Loader2 className="animate-spin" /></div>;
+    if (loading) return (
+        <div className="h-full flex flex-col items-center justify-center text-neutral-500 gap-4">
+            <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+            <p className="text-sm font-medium animate-pulse">Synchronizing your habits...</p>
+        </div>
+    );
 
     return (
-        <div className="p-8 h-full flex flex-col max-w-6xl mx-auto animate-in fade-in duration-500">
-            {/* Dashboard Header */}
-            <div className="mb-6">
-                <h1 className="text-3xl font-semibold text-white tracking-tight">Weekly Focus</h1>
-                <p className="text-neutral-500 mt-1">Track your consistency.</p>
+        <div className="p-4 sm:p-8 h-full flex flex-col max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 pb-24">
+            {/* Header Area */}
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-10">
+                <div>
+                    <h1 className="text-3xl sm:text-5xl font-bold text-[var(--text-primary)] tracking-tight mb-2">Weekly Focus</h1>
+                    <p className="text-[var(--text-secondary)] text-base sm:text-lg">Your journey to consistency starts here.</p>
+                </div>
+                <div className="flex gap-3">
+                    <button
+                        onClick={() => navigate('/analytics')}
+                        className="px-6 py-3 rounded-xl glass hover:bg-[var(--surface-hover)] transition-all text-sm font-bold text-[var(--text-primary)] flex items-center gap-2"
+                    >
+                        Insights
+                    </button>
+                    <button
+                        onClick={() => setAdding(true)}
+                        className="px-6 py-3 rounded-xl bg-[var(--accent)] hover:opacity-90 transition-all text-sm font-bold text-white shadow-lg shadow-indigo-500/20 flex items-center gap-2 group"
+                    >
+                        <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform" />
+                        Add Habit
+                    </button>
+                </div>
             </div>
 
-            {/* Dashboard Action Panel */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                {/* Add Habit */}
-                <button
-                    onClick={() => setAdding(true)}
-                    className="flex items-center gap-3 p-4 bg-gradient-to-br from-blue-600/20 to-blue-800/20 border border-blue-600/30 rounded-xl hover:from-blue-600/30 hover:to-blue-800/30 transition-all group"
-                >
-                    <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Plus className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="text-left">
-                        <div className="font-semibold text-white">Add Habit</div>
-                        <div className="text-xs text-neutral-500">Add a new goal</div>
-                    </div>
-                </button>
-
-                {/* Templates */}
+            {/* Quick Actions Grid */}
+            <div className="grid grid-cols-2 gap-4 mb-10">
                 <button
                     onClick={() => navigate('/templates')}
-                    className="flex items-center gap-3 p-4 bg-gradient-to-br from-purple-600/20 to-purple-800/20 border border-purple-600/30 rounded-xl hover:from-purple-600/30 hover:to-purple-800/30 transition-all group"
+                    className="p-5 premium-card bg-gradient-to-br from-indigo-500/10 to-transparent flex flex-col items-start gap-4 text-left group"
                 >
-                    <div className="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Layers className="w-5 h-5 text-white" />
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform">
+                        <Layers className="w-6 h-6" />
                     </div>
-                    <div className="text-left">
-                        <div className="font-semibold text-white">Templates</div>
-                        <div className="text-xs text-neutral-500">Grouped routines</div>
+                    <div>
+                        <div className="font-bold text-[var(--text-primary)] mb-1 text-sm sm:text-base">Templates</div>
+                        <div className="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-widest font-bold">Routines</div>
                     </div>
                 </button>
-
-                {/* Calendar */}
                 <button
                     onClick={() => navigate('/calendar')}
-                    className="flex items-center gap-3 p-4 bg-gradient-to-br from-emerald-600/20 to-emerald-800/20 border border-emerald-600/30 rounded-xl hover:from-emerald-600/30 hover:to-emerald-800/30 transition-all group"
+                    className="p-5 premium-card bg-gradient-to-br from-emerald-500/10 to-transparent flex flex-col items-start gap-4 text-left group"
                 >
-                    <div className="w-10 h-10 rounded-lg bg-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Calendar className="w-5 h-5 text-white" />
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform">
+                        <Calendar className="w-6 h-6" />
                     </div>
-                    <div className="text-left">
-                        <div className="font-semibold text-white">Calendar</div>
-                        <div className="text-xs text-neutral-500">Go to specific date</div>
+                    <div>
+                        <div className="font-bold text-[var(--text-primary)] mb-1 text-sm sm:text-base">Calendar</div>
+                        <div className="text-[10px] sm:text-xs text-[var(--text-secondary)] uppercase tracking-widest font-bold">History</div>
                     </div>
                 </button>
             </div>
 
-            <div className="bg-[var(--color-habit-card)] rounded-2xl border border-[var(--color-habit-border)] shadow-2xl overflow-hidden flex flex-col flex-1 min-h-0">
-                {/* Header Row */}
-                <div className="flex border-b border-[var(--color-habit-border)] bg-neutral-900/50 backdrop-blur-sm">
-                    <div className="w-64 flex-shrink-0 p-4 font-medium text-neutral-400 text-sm sticky left-0 bg-[var(--color-habit-card)] z-10 border-r border-[var(--color-habit-border)]">
-                        Task Name
-                    </div>
-                    <div className="flex-1 overflow-x-auto no-scrollbar">
-                        <div className="flex min-w-full">
-                            {DAYS.map((day) => {
-                                const isToday = day.toDateString() === TODAY_STR;
-                                return (
-                                    <div key={day.toISOString()} className={clsx(
-                                        "flex-1 min-w-[100px] p-4 text-center border-r border-[var(--color-habit-border)] last:border-r-0 flex flex-col items-center gap-1",
-                                        isToday ? "bg-white/5" : ""
-                                    )}>
-                                        <span className={clsx("text-xs font-semibold uppercase tracking-wider", isToday ? "text-blue-400" : "text-neutral-500")}>
-                                            {day.toLocaleDateString('en-US', { weekday: 'short' })}
+            {/* Weekly Table Container */}
+            <div className="premium-card overflow-hidden flex flex-col flex-1 min-h-0 glass">
+                <div className="overflow-x-auto custom-scrollbar">
+                    <div className="min-w-[800px]">
+                        {/* Header Row */}
+                        <div className="flex border-b border-[var(--border)] bg-[var(--surface-muted)]">
+                            <div className="w-64 flex-shrink-0 p-6 font-bold text-[var(--text-secondary)] text-[10px] uppercase tracking-[0.2em] sticky left-0 bg-[var(--surface)] z-10 border-r border-[var(--border)]">
+                                Habit Name
+                            </div>
+                            <div className="flex-1 flex">
+                                {DAYS.map((day) => {
+                                    const isToday = day.toDateString() === TODAY_STR;
+                                    return (
+                                        <div key={day.toISOString()} className={clsx(
+                                            "flex-1 p-4 text-center border-r border-[var(--border)] last:border-r-0 flex flex-col items-center gap-1",
+                                            isToday ? "bg-indigo-500/5" : ""
+                                        )}>
+                                            <span className={clsx("text-[10px] font-bold uppercase tracking-widest", isToday ? "text-[var(--accent)]" : "text-[var(--text-secondary)]")}>
+                                                {day.toLocaleDateString('en-US', { weekday: 'short' })}
+                                            </span>
+                                            <span className={clsx("text-xl font-black", isToday ? "text-[var(--accent)]" : "text-[var(--text-primary)]")}>
+                                                {day.getDate()}
+                                            </span>
+                                            {isToday && <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] mt-1 shadow-[0_0_8px_var(--accent)]" />}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Habit Rows */}
+                        <div className="divide-y divide-[var(--border)]">
+                            {habits.map((habit) => (
+                                <div key={habit.id} className="flex group hover:bg-[var(--surface-hover)] transition-colors">
+                                    <div className="w-64 flex-shrink-0 p-6 sticky left-0 bg-[var(--surface)] group-hover:bg-[var(--surface-hover)] z-10 border-r border-[var(--border)] flex items-center justify-between transition-colors">
+                                        <span className="text-[var(--text-primary)] font-bold text-sm truncate group-hover:text-[var(--accent)] transition-colors">
+                                            {habit.title}
                                         </span>
-                                        <span className={clsx("text-lg font-medium", isToday ? "text-white" : "text-neutral-300")}>
-                                            {day.getDate()}
-                                        </span>
+                                        <button
+                                            onClick={() => deleteHabit(habit.id, habit.title)}
+                                            className="opacity-0 group-hover:opacity-100 transition-all text-[var(--text-secondary)] hover:text-rose-500 p-2 rounded-lg hover:bg-rose-500/10"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
                                     </div>
-                                );
-                            })}
+                                    <div className="flex-1 flex">
+                                        {DAYS.map((day) => {
+                                            const dateStrKey = getLocalDateString(day);
+                                            const isChecked = !!habit.logs?.[dateStrKey];
+                                            const isToday = day.toDateString() === TODAY_STR;
+                                            const isInteractive = isToday;
+
+                                            return (
+                                                <div key={dateStrKey} className={clsx(
+                                                    "flex-1 border-r border-[var(--border)] last:border-r-0 flex items-center justify-center py-4",
+                                                    isToday ? "bg-indigo-500/5" : ""
+                                                )}>
+                                                    <button
+                                                        onClick={() => toggleHabit(habit.id, day)}
+                                                        disabled={!isInteractive}
+                                                        className={twMerge(
+                                                            "w-10 h-10 rounded-2xl border-2 flex items-center justify-center transition-all duration-500 group/check relative overflow-hidden",
+                                                            isChecked
+                                                                ? "bg-[var(--accent)] border-[var(--accent)] shadow-lg shadow-indigo-500/30 scale-105"
+                                                                : "border-[var(--border)] bg-[var(--surface-muted)] hover:border-[var(--text-secondary)]",
+                                                            !isInteractive && "opacity-20 grayscale pointer-events-none"
+                                                        )}
+                                                    >
+                                                        <Check className={clsx(
+                                                            "w-5 h-5 text-white transition-all duration-300",
+                                                            isChecked ? "scale-100 opacity-100" : "scale-50 opacity-0"
+                                                        )} strokeWidth={4} />
+                                                        {isChecked && (
+                                                            <div className="absolute inset-0 bg-gradient-to-tr from-white/0 to-white/20" />
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
 
-                {/* Rows */}
-                <div className="overflow-y-auto overflow-x-hidden flex-1 custom-scrollbar">
-                    {habits.map((habit) => (
-                        <div key={habit.id} className="flex border-b border-[var(--color-habit-border)] last:border-0 group hover:bg-white/[0.02] transition-colors relative">
-                            <div className="w-64 flex-shrink-0 p-4 sticky left-0 bg-[var(--color-habit-card)] group-hover:bg-[#1f1f1f] z-10 border-r border-[var(--color-habit-border)] flex items-center justify-between">
-                                <span
-                                    className="text-neutral-200 font-medium truncate select-none"
-                                >
-                                    {habit.title}
-                                </span>
-                                <button
-                                    onClick={() => deleteHabit(habit.id, habit.title)}
-                                    className="opacity-0 group-hover:opacity-100 transition-opacity text-neutral-500 hover:text-red-500 p-1 rounded hover:bg-red-500/10"
-                                    title="Delete habit"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                            </div>
-                            <div className="flex-1 overflow-x-auto no-scrollbar">
-                                <div className="flex min-w-full h-full">
-                                    {DAYS.map((day) => {
-                                        const dateStrKey = day.toISOString().split('T')[0];
-                                        const isChecked = !!habit.logs?.[dateStrKey];
-                                        const isToday = day.toDateString() === TODAY_STR;
+                {/* New Habit Inline Editor */}
+                {adding && (
+                    <div className="p-6 bg-[var(--surface-muted)] border-t border-[var(--border)] animate-in slide-in-from-top-4">
+                        <form onSubmit={addHabit} className="flex gap-4">
+                            <input
+                                autoFocus
+                                className="bg-[var(--surface)] text-[var(--text-primary)] px-5 py-3 rounded-xl w-full border border-[var(--border)] focus:border-[var(--accent)] outline-none transition-all placeholder:text-[var(--text-secondary)] font-bold"
+                                placeholder="What's your next big focus?"
+                                value={newHabitName}
+                                onChange={e => setNewHabitName(e.target.value)}
+                                onBlur={() => !newHabitName && setAdding(false)}
+                            />
+                            <button className="px-8 py-3 bg-[var(--accent)] rounded-xl text-white font-bold text-sm shadow-lg shadow-indigo-500/20">Create</button>
+                        </form>
+                    </div>
+                )}
 
-                                        // Disable interaction if NOT today (handled by logic, but UI should also reflect)
-                                        const isInteractive = isToday;
-
-                                        return (
-                                            <div key={dateStrKey} className={clsx(
-                                                "flex-1 min-w-[100px] border-r border-[var(--color-habit-border)] last:border-r-0 flex items-center justify-center relative",
-                                                isToday ? "bg-white/5" : ""
-                                            )}>
-                                                <button
-                                                    onClick={() => toggleHabit(habit.id, day)}
-                                                    disabled={!isInteractive}
-                                                    className={twMerge(
-                                                        "w-8 h-8 rounded-full border flex items-center justify-center transition-all duration-300 ease-out group/check",
-                                                        isChecked
-                                                            ? "bg-blue-600 border-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.3)] scale-110"
-                                                            : "border-neutral-700 bg-neutral-800/30",
-                                                        isInteractive ? "hover:border-neutral-500 hover:bg-neutral-800 cursor-pointer" : "cursor-not-allowed opacity-50"
-                                                    )}
-                                                >
-                                                    <Check className={clsx(
-                                                        "w-4 h-4 text-white transition-all duration-300",
-                                                        isChecked ? "scale-100 opacity-100" : "scale-50 opacity-0"
-                                                    )} strokeWidth={3} />
-                                                </button>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
+                {!loading && habits.length === 0 && !adding && (
+                    <div className="py-32 flex flex-col items-center gap-6 text-[var(--text-secondary)]">
+                        <div className="w-20 h-20 rounded-full bg-[var(--surface-muted)] flex items-center justify-center">
+                            <Plus className="w-8 h-8 opacity-20" />
                         </div>
-                    ))}
-
-                    {/* New Habit Input Row */}
-                    {adding && (
-                        <div className="flex border-b border-[var(--color-habit-border)] animate-in fade-in slide-in-from-top-2">
-                            <div className="w-64 p-4 border-r border-[var(--color-habit-border)]">
-                                <form onSubmit={addHabit}>
-                                    <input
-                                        autoFocus
-                                        className="bg-neutral-800 text-white px-3 py-1 rounded w-full border border-blue-500 outline-none"
-                                        placeholder="Habit Name..."
-                                        value={newHabitName}
-                                        onChange={e => setNewHabitName(e.target.value)}
-                                        onBlur={() => !newHabitName && setAdding(false)}
-                                    />
-                                </form>
-                            </div>
-                            <div className="flex-1"></div>
+                        <div className="text-center">
+                            <p className="text-xl font-black text-[var(--text-primary)] mb-1">Focus List Empty</p>
+                            <p className="text-sm font-medium">Ready to build something amazing today?</p>
                         </div>
-                    )}
-
-                    {!loading && habits.length === 0 && !adding && (
-                        <div className="p-10 text-center text-neutral-500">
-                            No habits found. Start by creating one.
-                        </div>
-                    )}
-                </div>
+                        <button
+                            onClick={() => setAdding(true)}
+                            className="px-8 py-3 rounded-xl border border-[var(--border)] text-[var(--text-primary)] font-bold text-sm hover:bg-[var(--surface-hover)] transition-all"
+                        >
+                            Configure First Habit
+                        </button>
+                    </div>
+                )}
             </div>
+
         </div>
     );
 }

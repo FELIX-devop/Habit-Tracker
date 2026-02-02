@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import api from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, Loader2 } from 'lucide-react';
-import clsx from 'clsx';
 
 export default function AuthPage() {
     const [isLogin, setIsLogin] = useState(true);
@@ -37,7 +36,18 @@ export default function AuthPage() {
         <div className="flex min-h-screen items-center justify-center p-4">
             <div className="w-full max-w-md space-y-8 bg-[var(--color-habit-card)] p-8 rounded-2xl border border-[var(--color-habit-border)] shadow-2xl animate-in fade-in zoom-in duration-300">
                 <div className="text-center">
-                    <h2 className="text-3xl font-bold tracking-tight text-white">
+                    <div className="flex flex-col items-center mb-8">
+                        <img
+                            src="/logo.png"
+                            alt="HabitFlow Icon"
+                            className="h-24 w-auto object-contain dark:mix-blend-screen light:mix-blend-multiply dark:brightness-125 light:invert light:contrast-125 mb-4"
+                        />
+                        <div className="flex items-center text-4xl font-black tracking-tighter">
+                            <span className="text-[var(--text-primary)] transition-colors duration-300">Habit</span>
+                            <span className="bg-gradient-to-r from-indigo-500 to-violet-600 bg-clip-text text-transparent">Flow</span>
+                        </div>
+                    </div>
+                    <h2 className="text-3xl font-bold tracking-tight text-[var(--text-primary)]">
                         {isLogin ? 'Welcome back' : 'Create an account'}
                     </h2>
                     <p className="mt-2 text-sm text-neutral-400">

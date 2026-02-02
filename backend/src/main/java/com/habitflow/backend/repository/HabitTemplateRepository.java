@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface HabitTemplateRepository extends MongoRepository<HabitTemplate, String> {
     List<HabitTemplate> findByUserId(String userId);
+
+    void deleteByUserId(String userId);
 }

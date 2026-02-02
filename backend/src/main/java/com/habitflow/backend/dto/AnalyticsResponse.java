@@ -42,6 +42,7 @@ public class AnalyticsResponse {
         private String title;
         private double completionRate;
         private int completedCount;
+        private String trend;
     }
 
     @Data

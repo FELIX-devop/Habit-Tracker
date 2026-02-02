@@ -27,136 +27,186 @@ public class AnalyticsService {
         List<Habit> habits = habitRepository.findByUserId(user.getId());
         LocalDate today = LocalDate.now();
 
-        // 1. Weekly Chart Data (Last 7 days)
-        List<AnalyticsResponse.DailyData> weeklyData = new ArrayList<>();
-        LocalDate startOfWeek = today.minusDays(6);
-
-        for (int i = 0; i < 7; i++) {
-            LocalDate date = startOfWeek.plusDays(i);
-            String dateStr = date.toString();
-            String dayName = date.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.ENGLISH);
-
-            int dailyCount = 0;
-            for (Habit habit : habits) {
-                if (habit.getLogs().getOrDefault(dateStr, false)) {
-                    dailyCount++;
-                }
-            }
-            weeklyData.add(AnalyticsResponse.DailyData.builder()
-                    .name(dayName)
-                    .value(dailyCount)
-                    .build());
+        // Edge case: No habits
+        if (habits.isEmpty()) {
+            return createEmptyResponse();
         }
 
-        // 2. Habit Stats & Best/Worst
-        List<AnalyticsResponse.HabitStat> habitStats = new ArrayList<>();
-        String mostCompleted = "None";
-        String mostMissed = "None";
-        int maxCompleted = -1;
-        int minCompleted = Integer.MAX_VALUE;
+        // 1. LAST 7 DAYS ACTIVITY (BAR CHART)
+        List<AnalyticsResponse.DailyData> weeklyActivity = new ArrayList<>();
+        LocalDate startOfActivity = today.minusDays(6);
+        for (int i = 0; i < 7; i++) {
+            LocalDate date = startOfActivity.plusDays(i);
+            String dateStr = date.toString();
+            int count = 0;
+            for (Habit h : habits) {
+                if (h.getLogs().getOrDefault(dateStr, false)) {
+                    count++;
+                }
+            }
+            weeklyActivity.add(new AnalyticsResponse.DailyData(
+                    date.getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.ENGLISH),
+                    count));
+        }
 
-        // We'll calculate stats based on the last 30 days for each habit
+        // 2. HABIT PERFORMANCE (30 DAYS RANGE)
+        List<AnalyticsResponse.HabitStat> habitStats = new ArrayList<>();
+        List<HabitCalculation> calcs = new ArrayList<>();
+
         LocalDate thirtyDaysAgo = today.minusDays(29);
 
         for (Habit habit : habits) {
-            int completedCount = 0;
-            int totalPossible = 0;
-
-            // Check logs from creation date or 30 days ago, whichever is later
-            LocalDate createdDate = habit.getCreatedAt().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
-            LocalDate calculationStart = createdDate.isAfter(thirtyDaysAgo) ? createdDate : thirtyDaysAgo;
-
-            for (LocalDate d = calculationStart; !d.isAfter(today); d = d.plusDays(1)) {
-                totalPossible++;
-                if (habit.getLogs().getOrDefault(d.toString(), false)) {
-                    completedCount++;
-                }
-            }
-
-            double rate = totalPossible == 0 ? 0 : ((double) completedCount / totalPossible) * 100;
-            rate = Math.round(rate * 10.0) / 10.0;
-
-            habitStats.add(AnalyticsResponse.HabitStat.builder()
-                    .id(habit.getId())
-                    .title(habit.getTitle())
-                    .completedCount(completedCount)
-                    .completionRate(rate)
-                    .build());
-
-            if (completedCount > maxCompleted) {
-                maxCompleted = completedCount;
-                mostCompleted = habit.getTitle();
-            }
-            if (completedCount < minCompleted) {
-                minCompleted = completedCount;
-                mostMissed = habit.getTitle();
+            HabitCalculation calc = calculateForHabit(habit, thirtyDaysAgo, today);
+            if (calc.totalDays > 0) {
+                calcs.add(calc);
+                habitStats.add(AnalyticsResponse.HabitStat.builder()
+                        .id(habit.getId())
+                        .title(habit.getTitle())
+                        .completedCount(calc.completedDays)
+                        .completionRate(Math.round(calc.completionRate * 10.0) / 10.0)
+                        .trend(determineTrend(calc.completionRate, calc.totalDays))
+                        .build());
             }
         }
 
-        if (habits.isEmpty()) {
-            mostCompleted = "N/A";
-            mostMissed = "N/A";
+        // Edge case: No applicable habits in range
+        if (calcs.isEmpty()) {
+            return createEmptyResponse();
         }
 
-        // 3. Weekly & Monthly Summary
-        AnalyticsResponse.SummaryStats weeklySummary = calculateSummary(habits, today, 7);
-        AnalyticsResponse.SummaryStats monthlySummary = calculateSummary(habits, today, 30);
+        // 3. MOST COMPLETED HABIT
+        // Formula: MAX(completedDays). Tie: higher completionRate, then most recent
+        // activity.
+        HabitCalculation bestHabit = calcs.stream()
+                .max(Comparator.comparingInt((HabitCalculation c) -> c.completedDays)
+                        .thenComparingDouble(c -> c.completionRate)
+                        .thenComparing(c -> c.lastActivityDate != null ? c.lastActivityDate : LocalDate.MIN))
+                .orElse(null);
 
-        // 4. Global Stats
+        // 4. MOST MISSED HABIT
+        // Formula: MAX(missedDays).
+        HabitCalculation worstHabit = calcs.stream()
+                .max(Comparator.comparingInt((HabitCalculation c) -> c.missedDays)
+                        .thenComparingDouble(c -> -c.completionRate)) // Secondary: lower completion rate
+                .orElse(null);
+
+        String mostCompletedStr = bestHabit != null ? bestHabit.title : "None";
+        String mostMissedStr = "None 🎉";
+        if (worstHabit != null && worstHabit.missedDays > 0) {
+            mostMissedStr = worstHabit.title;
+        }
+
+        // 5. WEEKLY & MONTHLY SUMMARIES
+        // Formula: (sum of completedDays) / (sum of totalDays) * 100
+        AnalyticsResponse.SummaryStats weeklySummary = calculateOverallSummary(habits, today.minusDays(6), today);
+        AnalyticsResponse.SummaryStats monthlySummary = calculateOverallSummary(habits, today.minusDays(29), today);
+
+        // 6. GLOBAL STATS
         int currentStreak = calculateStreak(habits, today);
-        int totalCompleted = habits.stream().mapToInt(h -> (int) h.getLogs().values().stream().filter(v -> v).count())
-                .sum();
+        int totalCompletedOverall = habits.stream()
+                .mapToInt(h -> (int) h.getLogs().values().stream().filter(v -> v).count()).sum();
 
         return AnalyticsResponse.builder()
-                .weeklyData(weeklyData)
-                .steakTrend(weeklyData)
+                .weeklyData(weeklyActivity)
+                .steakTrend(weeklyActivity) // Reusing weekly data for trend visual
                 .currentStreak(currentStreak)
-                .totalCompleted(totalCompleted)
+                .totalCompleted(totalCompletedOverall)
                 .consistency(weeklySummary.getPercentage())
                 .habitStats(habitStats)
-                .mostCompletedHabit(mostCompleted)
-                .mostMissedHabit(mostMissed)
+                .mostCompletedHabit(mostCompletedStr)
+                .mostMissedHabit(mostMissedStr)
                 .weeklySummary(weeklySummary)
                 .monthlySummary(monthlySummary)
                 .build();
     }
 
-    private AnalyticsResponse.SummaryStats calculateSummary(List<Habit> habits, LocalDate today, int days) {
+    private AnalyticsResponse createEmptyResponse() {
+        AnalyticsResponse.SummaryStats zeroSummary = new AnalyticsResponse.SummaryStats(0, 0, 0);
+        return AnalyticsResponse.builder()
+                .weeklyData(new ArrayList<>())
+                .steakTrend(new ArrayList<>())
+                .habitStats(new ArrayList<>())
+                .mostCompletedHabit("No data yet")
+                .mostMissedHabit("--")
+                .weeklySummary(zeroSummary)
+                .monthlySummary(zeroSummary)
+                .build();
+    }
+
+    private HabitCalculation calculateForHabit(Habit habit, LocalDate start, LocalDate end) {
+        LocalDate creationDate = habit.getCreatedAt().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+        LocalDate calcStart = creationDate.isAfter(start) ? creationDate : start;
+
+        int totalDays = 0;
+        int completedDays = 0;
+        LocalDate lastActivity = null;
+
+        for (LocalDate d = calcStart; !d.isAfter(end); d = d.plusDays(1)) {
+            totalDays++;
+            if (habit.getLogs().getOrDefault(d.toString(), false)) {
+                completedDays++;
+                lastActivity = d;
+            }
+        }
+
+        double rate = totalDays == 0 ? 0 : ((double) completedDays / totalDays) * 100;
+        return new HabitCalculation(habit.getTitle(), totalDays, completedDays, rate, lastActivity);
+    }
+
+    private String determineTrend(double rate, int totalDays) {
+        if (totalDays < 3)
+            return "Insufficient Data";
+        if (rate < 60)
+            return "Needs Focus";
+        if (rate <= 85)
+            return "Stable";
+        return "Excellent";
+    }
+
+    private AnalyticsResponse.SummaryStats calculateOverallSummary(List<Habit> habits, LocalDate start, LocalDate end) {
         int totalPossible = 0;
         int totalDone = 0;
 
-        for (int i = 0; i < days; i++) {
-            LocalDate date = today.minusDays(i);
-            String dateStr = date.toString();
-            for (Habit habit : habits) {
-                // Only count days since habit was created
-                LocalDate createdDate = habit.getCreatedAt().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
-                if (!date.isBefore(createdDate)) {
-                    totalPossible++;
-                    if (habit.getLogs().getOrDefault(dateStr, false)) {
-                        totalDone++;
-                    }
+        for (Habit h : habits) {
+            LocalDate creationDate = h.getCreatedAt().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+            LocalDate effectiveStart = creationDate.isAfter(start) ? creationDate : start;
+
+            for (LocalDate d = effectiveStart; !d.isAfter(end); d = d.plusDays(1)) {
+                totalPossible++;
+                if (h.getLogs().getOrDefault(d.toString(), false)) {
+                    totalDone++;
                 }
             }
         }
 
         double percentage = totalPossible == 0 ? 0 : ((double) totalDone / totalPossible) * 100;
-        return AnalyticsResponse.SummaryStats.builder()
-                .totalPossible(totalPossible)
-                .totalDone(totalDone)
-                .percentage(Math.round(percentage * 10.0) / 10.0)
-                .build();
+        return new AnalyticsResponse.SummaryStats(totalPossible, totalDone, Math.round(percentage * 10.0) / 10.0);
     }
 
+    private static class HabitCalculation {
+        String title;
+        int totalDays;
+        int completedDays;
+        int missedDays;
+        double completionRate;
+        LocalDate lastActivityDate;
+
+        HabitCalculation(String title, int totalDays, int completedDays, double rate, LocalDate lastActivity) {
+            this.title = title;
+            this.totalDays = totalDays;
+            this.completedDays = completedDays;
+            this.missedDays = totalDays - completedDays;
+            this.completionRate = rate;
+            this.lastActivityDate = lastActivity;
+        }
+    }
+
+    // Reuse existing helper methods for streak
     private int calculateStreak(List<Habit> habits, LocalDate today) {
         int streak = 0;
         LocalDate date = today;
-
-        // If today is empty, we check yesterday to see if streak is still alive
-        if (!hasCompletionOnDate(habits, date)) {
+        if (!hasCompletionOnDate(habits, date))
             date = date.minusDays(1);
-        }
-
         while (hasCompletionOnDate(habits, date)) {
             streak++;
             date = date.minusDays(1);
@@ -166,11 +216,6 @@ public class AnalyticsService {
 
     private boolean hasCompletionOnDate(List<Habit> habits, LocalDate date) {
         String dateStr = date.toString();
-        for (Habit h : habits) {
-            if (h.getLogs().getOrDefault(dateStr, false)) {
-                return true;
-            }
-        }
-        return false;
+        return habits.stream().anyMatch(h -> h.getLogs().getOrDefault(dateStr, false));
     }
 }

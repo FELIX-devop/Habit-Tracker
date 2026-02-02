@@ -74,61 +74,67 @@ export default function TemplatesPage() {
         }
     };
 
-    if (loading) return <div className="h-full flex items-center justify-center text-neutral-500"><Loader2 className="animate-spin" /></div>;
+    if (loading) return (
+        <div className="h-full flex flex-col items-center justify-center text-neutral-500 gap-4">
+            <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+        </div>
+    );
 
     return (
-        <div className="p-8 h-full overflow-y-auto max-w-4xl mx-auto animate-in fade-in duration-500 custom-scrollbar">
-            <div className="flex items-center justify-between mb-8">
+        <div className="p-4 sm:p-8 h-full overflow-y-auto max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 custom-scrollbar pb-24">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12">
                 <div>
-                    <h1 className="text-3xl font-semibold text-white tracking-tight">Habit Templates</h1>
-                    <p className="text-neutral-500 mt-1">Group your habits into reusable routines</p>
+                    <h1 className="text-3xl sm:text-5xl font-bold text-[var(--text-primary)] tracking-tight leading-tight mb-2">Routines</h1>
+                    <p className="text-[var(--text-secondary)] text-base sm:text-lg">Group your habits into powerful templates.</p>
                 </div>
-                <button
-                    onClick={() => setCreating(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-all font-medium text-sm shadow-lg shadow-blue-600/20"
-                >
-                    <Plus className="w-4 h-4" />
-                    <span>Create Template</span>
-                </button>
+                {!creating && (
+                    <button
+                        onClick={() => setCreating(true)}
+                        className="px-6 py-3 rounded-xl bg-[var(--accent)] hover:opacity-90 transition-all text-sm font-bold text-white shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2 group"
+                    >
+                        <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform" />
+                        Create Template
+                    </button>
+                )}
             </div>
 
             {creating && (
-                <div className="bg-neutral-900 border border-blue-500/50 rounded-2xl p-6 mb-8 animate-in slide-in-from-top-4 duration-300">
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-medium text-white">New Template</h3>
-                        <div className="flex items-center gap-2">
-                            <button onClick={() => setCreating(false)} className="p-2 hover:bg-neutral-800 rounded-lg text-neutral-400">
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
+                <div className="premium-card glass p-6 sm:p-8 mb-12 animate-in slide-in-from-top-4 duration-300 relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-violet-500 to-indigo-500" />
+
+                    <div className="flex items-center justify-between mb-8">
+                        <h3 className="text-xl font-bold text-[var(--text-primary)]">System Configuration</h3>
+                        <button onClick={() => setCreating(false)} className="p-2 hover:bg-[var(--surface-hover)] rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">
+                            <X className="w-5 h-5" />
+                        </button>
                     </div>
 
-                    <div className="space-y-4">
+                    <div className="space-y-8">
                         <div>
-                            <label className="block text-sm font-medium text-neutral-400 mb-1">Template Name</label>
+                            <label className="block text-xs font-bold text-[var(--text-secondary)] mb-2 uppercase tracking-[0.2em]">Routine Identifier</label>
                             <input
                                 autoFocus
-                                className="w-full bg-neutral-800 text-white px-4 py-2 rounded-xl border border-neutral-700 focus:border-blue-500 outline-none transition-all"
-                                placeholder="e.g. Morning Routine"
+                                className="w-full bg-[var(--surface-muted)] text-[var(--text-primary)] px-5 py-3 rounded-xl border border-[var(--border)] focus:border-indigo-500 outline-none transition-all placeholder:text-[var(--text-secondary)] font-bold"
+                                placeholder="e.g. Deep Work Session"
                                 value={newName}
                                 onChange={e => setNewName(e.target.value)}
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-neutral-400 mb-2">Habits</label>
-                            <div className="space-y-2">
+                            <label className="block text-xs font-bold text-[var(--text-secondary)] mb-4 uppercase tracking-[0.2em]">Habit Payload</label>
+                            <div className="space-y-3">
                                 {newHabits.map((habit, index) => (
-                                    <div key={index} className="flex gap-2">
+                                    <div key={index} className="flex gap-3 animate-in slide-in-from-left-2" style={{ animationDelay: `${index * 50}ms` }}>
                                         <input
-                                            className="flex-1 bg-neutral-800 text-white px-4 py-2 rounded-xl border border-neutral-700 focus:border-blue-500 outline-none transition-all"
-                                            placeholder={`Habit ${index + 1}`}
+                                            className="flex-1 bg-[var(--surface-muted)] text-[var(--text-primary)] px-5 py-3 rounded-xl border border-[var(--border)] focus:border-indigo-400 outline-none transition-all placeholder:text-[var(--text-secondary)]"
+                                            placeholder={`Index ${index + 1}`}
                                             value={habit}
                                             onChange={e => handleHabitChange(index, e.target.value)}
                                         />
                                         <button
                                             onClick={() => handleRemoveHabitField(index)}
-                                            className="p-2 text-neutral-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                                            className="p-3 text-[var(--text-secondary)] hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"
                                         >
                                             <Trash2 className="w-5 h-5" />
                                         </button>
@@ -136,19 +142,19 @@ export default function TemplatesPage() {
                                 ))}
                                 <button
                                     onClick={handleAddHabitField}
-                                    className="w-full py-2 border-2 border-dashed border-neutral-800 rounded-xl text-neutral-500 hover:border-neutral-700 hover:text-neutral-400 transition-all"
+                                    className="w-full py-4 border-2 border-dashed border-[var(--border)] rounded-xl text-[var(--text-secondary)] font-bold text-sm hover:border-indigo-500/30 hover:text-indigo-500 transition-all flex items-center justify-center gap-2"
                                 >
-                                    + Add another habit
+                                    <Plus className="w-4 h-4" /> Add Protocol
                                 </button>
                             </div>
                         </div>
 
                         <button
                             onClick={saveTemplate}
-                            className="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-500 transition-all flex items-center justify-center gap-2 mt-4 shadow-lg shadow-blue-600/20"
+                            className="w-full py-4 bg-[var(--accent)] text-white rounded-xl font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2 mt-4 shadow-lg shadow-indigo-500/20"
                         >
                             <Save className="w-5 h-5" />
-                            Save Template
+                            Deploy Template
                         </button>
                     </div>
                 </div>
@@ -156,17 +162,20 @@ export default function TemplatesPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {templates.map(template => (
-                    <div key={template.id} className="bg-[var(--color-habit-card)] border border-[var(--color-habit-border)] rounded-2xl p-6 group hover:border-blue-500/30 transition-all shadow-xl">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-xl bg-blue-600/20 flex items-center justify-center text-blue-400">
-                                    <Layers className="w-5 h-5" />
+                    <div key={template.id} className="premium-card glass p-6 group relative overflow-hidden">
+                        <div className="flex items-start justify-between mb-6">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-500 group-hover:scale-110 transition-transform">
+                                    <Layers className="w-6 h-6" />
                                 </div>
-                                <h3 className="text-lg font-semibold text-white">{template.name}</h3>
+                                <div className="min-w-0">
+                                    <h3 className="text-xl font-bold text-[var(--text-primary)] group-hover:text-indigo-500 transition-colors truncate">{template.name}</h3>
+                                    <p className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">{template.habitTitles.length} Instructions</p>
+                                </div>
                             </div>
                             <button
                                 onClick={() => deleteTemplate(template.id)}
-                                className="p-2 text-neutral-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                                className="p-2 text-[var(--text-secondary)] hover:text-rose-500 hover:bg-rose-500/10 rounded-xl opacity-0 group-hover:opacity-100 transition-all"
                             >
                                 <Trash2 className="w-5 h-5" />
                             </button>
@@ -174,9 +183,9 @@ export default function TemplatesPage() {
 
                         <div className="space-y-2">
                             {template.habitTitles.map((title, i) => (
-                                <div key={i} className="flex items-center gap-2 text-neutral-400 text-sm">
-                                    <div className="w-1 h-1 rounded-full bg-blue-500" />
-                                    {title}
+                                <div key={i} className="flex items-center gap-3 text-[var(--text-secondary)] text-sm font-bold bg-[var(--surface-muted)] p-3 rounded-xl border border-[var(--border)]">
+                                    <span className="text-indigo-500 font-black text-[10px]">0{i + 1}</span>
+                                    <span className="truncate">{title}</span>
                                 </div>
                             ))}
                         </div>
@@ -184,15 +193,18 @@ export default function TemplatesPage() {
                 ))}
 
                 {!loading && templates.length === 0 && !creating && (
-                    <div className="col-span-full py-20 text-center">
-                        <div className="w-20 h-20 bg-neutral-900 rounded-full flex items-center justify-center mx-auto mb-4 text-neutral-700">
+                    <div className="col-span-full py-32 flex flex-col items-center gap-6 text-[var(--text-secondary)]">
+                        <div className="w-20 h-20 rounded-full bg-[var(--surface-muted)] border border-[var(--border)] flex items-center justify-center opacity-20">
                             <Layers className="w-10 h-10" />
                         </div>
-                        <h3 className="text-xl font-medium text-neutral-400">No templates yet</h3>
-                        <p className="text-neutral-600 mt-1 max-w-xs mx-auto">Create routines like 'Workout' or 'Work Focus' to add multiple habits at once.</p>
+                        <div className="text-center">
+                            <p className="text-xl font-black text-[var(--text-primary)] mb-1">Archive Empty</p>
+                            <p className="text-sm font-medium">Create your first routine to optimize your flow.</p>
+                        </div>
                     </div>
                 )}
             </div>
         </div>
+
     );
 }
