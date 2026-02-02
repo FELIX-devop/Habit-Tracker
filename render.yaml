@@ -2,26 +2,14 @@ services:
   # Backend Service
   - type: web
     name: habit-tracker-backend
-    runtime: java
+    env: java
     rootDir: backend
     buildCommand: ./mvnw clean package -DskipTests
-    startCommand: java -jar target/*.jar
+    startCommand: java -jar backend/target/*.jar
     envVars:
       - key: MONGODB_URI
         sync: false
       - key: JWT_SECRET
         sync: false
-      - key: FRONTEND_URL
-        sync: false
       - key: SPRING_PROFILES_ACTIVE
         value: prod
-
-  # Frontend Service (Static Site)
-  - type: web
-    name: habit-tracker-frontend
-    runtime: static
-    buildCommand: npm run build
-    staticPublishPath: dist
-    envVars:
-      - key: VITE_API_BASE_URL
-        sync: false
