@@ -42,7 +42,6 @@ export default function TaskPage() {
     // Calculate today's date on every render/action to avoid midnight bugs
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const todayISO = getLocalDateString(today);
     const todayStr = today.toDateString();
 
     // Get weekly days inside component to ensure they refresh at midnight
@@ -63,11 +62,17 @@ export default function TaskPage() {
 
     const toggleHabit = async (id: string, dateObj: Date) => {
         const dateStrKey = getLocalDateString(dateObj);
-        if (dateStrKey > todayISO) {
+
+        // Freshly calculate "today" to avoid midnight staleness
+        const nowFresh = new Date();
+        const todayFresh = new Date(nowFresh.getFullYear(), nowFresh.getMonth(), nowFresh.getDate());
+        const todayISOFresh = getLocalDateString(todayFresh);
+
+        if (dateStrKey > todayISOFresh) {
             alert("Cannot update future dates!");
             return;
         }
-        if (dateStrKey !== todayISO) {
+        if (dateStrKey !== todayISOFresh) {
             alert("You can only update the status for TODAY. Past dates are read-only.");
             return;
         }

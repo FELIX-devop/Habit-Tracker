@@ -45,17 +45,20 @@ public class HabitService {
             throw new IllegalArgumentException("Invalid date format. Use YYYY-MM-DD");
         }
 
-        // 2. Strict Date Validation
-        LocalDate today = LocalDate.now();
+        // 2. Date Validation (Timezone lenient)
+        // We allow updates for the date provided by the client as long as it's not
+        // more than 1 day in the future relative to the server (to account for
+        // timezones like Asia/Pacific).
+        LocalDate serverToday = LocalDate.now();
 
-        if (requestDate.isAfter(today)) {
+        if (requestDate.isAfter(serverToday.plusDays(1))) {
             throw new IllegalArgumentException("Cannot update future dates!");
         }
 
-        if (!requestDate.isEqual(today)) {
-            throw new IllegalArgumentException(
-                    "You can only update the status for TODAY (" + today + "). Past dates are read-only.");
-        }
+        // We trust the client's "today" for the checklist toggle,
+        // as the frontend handles the UI state of what counts as "Today".
+        // This ensures that at 12:05 AM for a user in IST, the server (in UTC)
+        // doesn't block the update.
 
         // 3. Fetch & Update
         Habit habit = habitRepository.findById(habitId)

@@ -110,7 +110,14 @@ export default function CalendarPage() {
                         <button onClick={handlePrevMonth} className="flex-1 sm:flex-none p-3 rounded-xl glass hover:bg-[var(--surface-hover)] transition-all text-[var(--text-primary)] flex justify-center">
                             <ChevronLeft className="w-5 h-5" />
                         </button>
-                        <button onClick={() => { setCurrentMonth(today.getMonth()); setCurrentYear(today.getFullYear()); }} className="flex-1 sm:flex-none px-5 py-2 rounded-xl border border-indigo-500/20 bg-indigo-500/5 hover:bg-indigo-500/10 transition-all text-[10px] uppercase tracking-widest font-black text-indigo-500">
+                        <button
+                            onClick={() => {
+                                const n = new Date();
+                                setCurrentMonth(n.getMonth());
+                                setCurrentYear(n.getFullYear());
+                            }}
+                            className="flex-1 sm:flex-none px-5 py-2 rounded-xl border border-indigo-500/20 bg-indigo-500/5 hover:bg-indigo-500/10 transition-all text-[10px] uppercase tracking-widest font-black text-indigo-500"
+                        >
                             Today
                         </button>
                         <button onClick={handleNextMonth} className="flex-1 sm:flex-none p-3 rounded-xl glass hover:bg-[var(--surface-hover)] transition-all text-[var(--text-primary)] flex justify-center">
@@ -175,7 +182,7 @@ export default function CalendarPage() {
             {/* Quick Actions Footer */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
                 <button
-                    onClick={() => navigate(`/habits/${getLocalDateString(today)}`)}
+                    onClick={() => navigate(`/habits/${getLocalDateString(new Date())}`)}
                     className="p-6 premium-card bg-gradient-to-br from-indigo-500/10 to-transparent flex items-center gap-6 group"
                 >
                     <div className="w-14 h-14 rounded-2xl bg-indigo-500/20 flex items-center justify-center text-indigo-500 group-hover:scale-110 transition-transform">

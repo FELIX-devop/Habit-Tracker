@@ -105,8 +105,15 @@ export default function DateHabitsPage() {
     };
 
     const toggleHabit = async (id: string) => {
-        if (!isToday) {
-            if (isPast) alert("Past dates are read-only.");
+        // Freshly calculate "today" to avoid stale state if page left open overnight
+        const nowFresh = new Date();
+        const todayFresh = new Date(nowFresh.getFullYear(), nowFresh.getMonth(), nowFresh.getDate());
+        const todayStrFresh = getLocalDateString(todayFresh);
+        const isTodayFresh = dateStr === todayStrFresh;
+        const isPastFresh = selectedDate.getTime() < todayFresh.getTime();
+
+        if (!isTodayFresh) {
+            if (isPastFresh) alert("Past dates are read-only.");
             else alert("You cannot mark habits as complete for future dates.");
             return;
         }
