@@ -2,7 +2,9 @@ import { BrowserRouter, Routes, Route, NavLink, Navigate, Outlet } from 'react-r
 import TaskPage from './pages/TaskPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import AuthPage from './pages/AuthPage';
-import { LayoutList, BarChart3, LogOut } from 'lucide-react';
+import CalendarPage from './pages/CalendarPage';
+import DateHabitsPage from './pages/DateHabitsPage';
+import { LayoutList, BarChart3, LogOut, Calendar } from 'lucide-react';
 import clsx from 'clsx';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
@@ -36,7 +38,8 @@ function Layout() {
           <span className="font-semibold tracking-tight text-white">HabitFlow</span>
         </div>
         <nav className="flex items-center gap-1 bg-neutral-900/50 p-1 rounded-lg border border-neutral-800">
-          <NavItem to="/" icon={LayoutList} label="Tasks" />
+          <NavItem to="/calendar" icon={Calendar} label="Calendar" />
+          <NavItem to="/tasks" icon={LayoutList} label="Tasks" />
           <NavItem to="/analytics" icon={BarChart3} label="Analytics" />
         </nav>
         <div className="flex items-center gap-4">
@@ -68,7 +71,10 @@ function App() {
         <Routes>
           <Route path="/login" element={<AuthPage />} />
           <Route element={<ProtectedRoute />}>
-            <Route path="/" element={<TaskPage />} />
+            <Route path="/" element={<Navigate to="/calendar" replace />} />
+            <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/habits/:date" element={<DateHabitsPage />} />
+            <Route path="/tasks" element={<TaskPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
           </Route>
         </Routes>
