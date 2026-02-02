@@ -1,15 +1,15 @@
 services:
-  # Backend Service
+  # Backend Service (Dockerized)
   - type: web
     name: habit-tracker-backend
-    runtime: java
-    rootDir: backend
-    buildCommand: ./mvnw clean package -DskipTests
-    startCommand: java -jar target/*.jar
+    runtime: docker           # <--- Forces Render to use your Dockerfile
+    rootDir: backend          # <--- Context for the Docker build
     envVars:
       - key: MONGODB_URI
         sync: false
       - key: JWT_SECRET
+        sync: false
+      - key: FRONTEND_URL
         sync: false
       - key: SPRING_PROFILES_ACTIVE
         value: prod
