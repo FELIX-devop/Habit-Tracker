@@ -28,13 +28,24 @@ public class HabitController {
     }
 
     @PostMapping("/{id}/toggle")
-    public ResponseEntity<?> toggleHabit(@PathVariable String id, @RequestParam String date, Authentication authentication) {
+    public ResponseEntity<?> toggleHabit(@PathVariable String id, @RequestParam String date,
+            Authentication authentication) {
         try {
             return ResponseEntity.ok(habitService.toggleHabit(id, authentication.getName(), date));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (RuntimeException e) {
-             return ResponseEntity.status(403).body(e.getMessage());
+            return ResponseEntity.status(403).body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteHabit(@PathVariable String id, Authentication authentication) {
+        try {
+            habitService.deleteHabit(id, authentication.getName());
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(403).body(e.getMessage());
         }
     }
 }

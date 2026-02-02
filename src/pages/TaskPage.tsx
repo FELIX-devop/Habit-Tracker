@@ -35,7 +35,6 @@ export default function TaskPage() {
     const [loading, setLoading] = useState(true);
     const [adding, setAdding] = useState(false);
     const [newHabitName, setNewHabitName] = useState('');
-    const [errorPromise, setErrorPromise] = useState<string | null>(null);
 
     useEffect(() => {
         fetchHabits();
@@ -103,6 +102,22 @@ export default function TaskPage() {
         }
     };
 
+    const deleteHabit = async (id: string, title: string) => {
+        if (!confirm(`Are you sure you want to delete "${title}"? This will remove all related logs.`)) {
+            return;
+        }
+
+        const previousHabits = [...habits];
+        setHabits(prev => prev.filter(h => h.id !== id));
+
+        try {
+            await api.delete(`/habits/${id}`);
+        } catch (e: any) {
+            setHabits(previousHabits);
+            alert(`Error: ${e.response?.data || "Failed to delete habit"}`);
+        }
+    };
+
     if (loading) return <div className="h-full flex items-center justify-center text-neutral-500"><Loader2 className="animate-spin" /></div>;
 
     return (
@@ -159,6 +174,13 @@ export default function TaskPage() {
                                 >
                                     {habit.title}
                                 </span>
+                                <button
+                                    onClick={() => deleteHabit(habit.id, habit.title)}
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity text-neutral-500 hover:text-red-500 p-1 rounded hover:bg-red-500/10"
+                                    title="Delete habit"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
                             </div>
                             <div className="flex-1 overflow-x-auto no-scrollbar">
                                 <div className="flex min-w-full h-full">

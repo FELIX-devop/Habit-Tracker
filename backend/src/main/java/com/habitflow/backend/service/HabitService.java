@@ -51,15 +51,16 @@ public class HabitService {
         if (requestDate.isAfter(today)) {
             throw new IllegalArgumentException("Cannot update future dates!");
         }
-        
+
         if (!requestDate.isEqual(today)) {
-             throw new IllegalArgumentException("You can only update the status for TODAY (" + today + "). Past dates are read-only.");
+            throw new IllegalArgumentException(
+                    "You can only update the status for TODAY (" + today + "). Past dates are read-only.");
         }
 
         // 3. Fetch & Update
         Habit habit = habitRepository.findById(habitId)
                 .orElseThrow(() -> new RuntimeException("Habit not found"));
-        
+
         User user = getUserByEmail(email);
 
         if (!habit.getUserId().equals(user.getId())) {
@@ -70,5 +71,18 @@ public class HabitService {
         habit.getLogs().put(dateStr, !currentStatus);
 
         return habitRepository.save(habit);
+    }
+
+    public void deleteHabit(String habitId, String email) {
+        Habit habit = habitRepository.findById(habitId)
+                .orElseThrow(() -> new RuntimeException("Habit not found"));
+
+        User user = getUserByEmail(email);
+
+        if (!habit.getUserId().equals(user.getId())) {
+            throw new RuntimeException("Unauthorized access to habit");
+        }
+
+        habitRepository.delete(habit);
     }
 }
