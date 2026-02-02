@@ -3,7 +3,7 @@ spring:
     name: habit-backend
   data:
     mongodb:
-      uri: mongodb+srv://rizeos_user:Qwertyuiop%40123%23@rizeos.ocor2vc.mongodb.net/habit-tracker?appName=RizeOS
+      uri: ${MONGODB_URI:mongodb://localhost:27017/habit-tracker}
       database: habit-tracker
       auto-index-creation: true
 

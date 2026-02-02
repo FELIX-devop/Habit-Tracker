@@ -13,6 +13,8 @@ import { LayoutList, BarChart3, LogOut, Calendar, Layers, Sun, Moon, User as Use
 import clsx from 'clsx';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import api from './api/api';
+import { useIsMobile } from './hooks/useMediaQuery';
+
 
 function NavItem({ to, icon: Icon, label }: { to: string; icon: any; label: string }) {
   return (
@@ -45,7 +47,6 @@ function UserDropdown({ user, logout, theme, toggleTheme }: { user: string | nul
         const res = await api.get('/users/me');
         setProfile(res.data);
       } catch (e) {
-        console.error(e);
       }
     };
     if (user) fetchProfile();
@@ -145,6 +146,7 @@ function UserDropdown({ user, logout, theme, toggleTheme }: { user: string | nul
 
 function Layout() {
   const { logout, user } = useAuth();
+  const isMobile = useIsMobile();
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     const saved = localStorage.getItem('theme');
     return (saved as 'light' | 'dark') || 'dark';
@@ -173,38 +175,96 @@ function Layout() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-[var(--bg)] text-[var(--text-primary)] selection:bg-indigo-500/30">
-      <header className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur-md z-10">
-        <div className="flex items-center gap-3">
-          <NavLink to="/" className="flex items-center gap-2 group">
-            <img
-              src="/logo.png"
-              alt="HabitFlow Icon"
-              className="h-10 w-auto object-contain dark:mix-blend-screen light:mix-blend-multiply dark:brightness-125 light:invert light:contrast-125 group-hover:scale-110 transition-transform duration-300"
-            />
-            <div className="flex items-center text-2xl font-black tracking-tighter">
-              <span className="text-[var(--text-primary)] transition-colors duration-300">Habit</span>
+      {/* Top Navigation - Desktop only */}
+      {!isMobile && (
+        <header className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur-md z-10">
+          <div className="flex items-center gap-3">
+            <NavLink to="/" className="flex items-center gap-2 group">
+              <img
+                src="/logo.png"
+                alt="HabitFlow Icon"
+                className="h-10 w-auto object-contain dark:mix-blend-screen light:mix-blend-multiply dark:brightness-125 light:invert light:contrast-125 group-hover:scale-110 transition-transform duration-300"
+              />
+              <div className="flex items-center text-2xl font-black tracking-tighter">
+                <span className="text-[var(--text-primary)] transition-colors duration-300">Habit</span>
+                <span className="bg-gradient-to-r from-indigo-500 to-violet-600 bg-clip-text text-transparent">Flow</span>
+              </div>
+            </NavLink>
+          </div>
+
+          <nav className="flex items-center gap-1 bg-[var(--surface-muted)] p-1.5 rounded-2xl border border-[var(--border)]">
+            <NavItem to="/calendar" icon={Calendar} label="Calendar" />
+            <NavItem to="/templates" icon={Layers} label="Templates" />
+            <NavItem to="/tasks" icon={LayoutList} label="Tasks" />
+            <NavItem to="/analytics" icon={BarChart3} label="Analytics" />
+          </nav>
+
+          <div className="flex items-center">
+            <UserDropdown user={user} logout={logout} theme={theme} toggleTheme={toggleTheme} />
+          </div>
+        </header>
+      )}
+
+      {/* Mobile Top Header (Just Brand + Profile) */}
+      {isMobile && (
+        <header className="flex items-center justify-between px-6 py-4 border-b border-[var(--border)] bg-[var(--bg)]/80 backdrop-blur-md z-10">
+          <NavLink to="/" className="flex items-center gap-2">
+            <div className="flex items-center text-xl font-black tracking-tighter">
+              <span className="text-[var(--text-primary)]">Habit</span>
               <span className="bg-gradient-to-r from-indigo-500 to-violet-600 bg-clip-text text-transparent">Flow</span>
             </div>
           </NavLink>
-        </div>
-
-        <nav className="flex items-center gap-1 bg-[var(--surface-muted)] p-1.5 rounded-2xl border border-[var(--border)]">
-          <NavItem to="/calendar" icon={Calendar} label="Calendar" />
-          <NavItem to="/templates" icon={Layers} label="Templates" />
-          <NavItem to="/tasks" icon={LayoutList} label="Tasks" />
-          <NavItem to="/analytics" icon={BarChart3} label="Analytics" />
-        </nav>
-
-        <div className="flex items-center">
           <UserDropdown user={user} logout={logout} theme={theme} toggleTheme={toggleTheme} />
-        </div>
-      </header>
+        </header>
+      )}
+
       <main className="flex-1 overflow-auto relative custom-scrollbar">
         <Outlet />
       </main>
+
+      {/* Bottom Navigation - Mobile only */}
+      {isMobile && (
+        <nav className="flex items-center justify-around p-2 border-t border-[var(--border)] bg-[var(--surface)] safe-area-bottom">
+          <MobileNavItem to="/calendar" icon={Calendar} label="Home" />
+          <MobileNavItem to="/templates" icon={Layers} label="Library" />
+          <div className="relative -top-4">
+            <NavLink
+              to="/tasks"
+              className={({ isActive }) =>
+                clsx(
+                  "w-14 h-14 rounded-2xl flex items-center justify-center shadow-xl transition-all duration-300",
+                  isActive ? "bg-indigo-600 text-white translate-y-[-4px]" : "bg-[var(--accent)] text-white"
+                )
+              }
+            >
+              <LayoutList className="w-6 h-6" />
+            </NavLink>
+          </div>
+          <MobileNavItem to="/analytics" icon={BarChart3} label="Stat" />
+          <MobileNavItem to="/settings" icon={Settings} label="User" />
+        </nav>
+      )}
     </div>
   );
 }
+
+function MobileNavItem({ to, icon: Icon, label }: { to: string; icon: any; label: string }) {
+  return (
+    <NavLink
+      to={to}
+      className={({ isActive }) =>
+        clsx(
+          "flex flex-col items-center gap-1 px-3 py-1 transition-all duration-300",
+          isActive ? "text-indigo-500 scale-110" : "text-[var(--text-secondary)]"
+        )
+      }
+    >
+      <Icon className="w-5 h-5" />
+      <span className="text-[10px] font-bold uppercase tracking-tight">{label}</span>
+    </NavLink>
+  );
+}
+
 
 function ProtectedRoute() {
   const { isAuthenticated, isLoading } = useAuth();
