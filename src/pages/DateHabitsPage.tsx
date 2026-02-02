@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Plus, Check, Loader2, Trash2, ArrowLeft, Calendar as CalendarIcon, Edit2, X, Save } from 'lucide-react';
+import { Plus, Check, Loader2, Trash2, ArrowLeft, Edit2, X, Save, Layers } from 'lucide-react';
 import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import api from '../api/api';
@@ -30,10 +30,13 @@ export default function DateHabitsPage() {
 
     useEffect(() => {
         fetchHabits();
+        fetchTemplates();
     }, []);
 
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editingName, setEditingName] = useState('');
+    const [showTemplates, setShowTemplates] = useState(false);
+    const [templates, setTemplates] = useState<any[]>([]);
 
     const fetchHabits = async () => {
         try {
@@ -43,6 +46,25 @@ export default function DateHabitsPage() {
             console.error(e);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchTemplates = async () => {
+        try {
+            const res = await api.get('/templates');
+            setTemplates(res.data);
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const applyTemplate = async (templateId: string) => {
+        try {
+            const res = await api.post(`/templates/${templateId}/apply`);
+            setHabits(res.data);
+            setShowTemplates(false);
+        } catch (e) {
+            alert("Failed to apply template");
         }
     };
 
@@ -178,13 +200,38 @@ export default function DateHabitsPage() {
                     <Plus className="w-4 h-4 text-blue-400" />
                     <span className="text-white font-medium">Add Habit</span>
                 </button>
-                <button
-                    onClick={() => navigate('/calendar')}
-                    className="flex items-center justify-center gap-2 p-3 bg-gradient-to-br from-purple-600/20 to-purple-800/20 border border-purple-600/30 rounded-xl hover:from-purple-600/30 hover:to-purple-800/30 transition-all"
-                >
-                    <CalendarIcon className="w-4 h-4 text-purple-400" />
-                    <span className="text-white font-medium">Change Date</span>
-                </button>
+                <div className="relative">
+                    <button
+                        onClick={() => setShowTemplates(!showTemplates)}
+                        className="w-full flex items-center justify-center gap-2 p-3 bg-gradient-to-br from-purple-600/20 to-purple-800/20 border border-purple-600/30 rounded-xl hover:from-purple-600/30 hover:to-purple-800/30 transition-all"
+                    >
+                        <Layers className="w-4 h-4 text-purple-400" />
+                        <span className="text-white font-medium">Use Template</span>
+                    </button>
+
+                    {showTemplates && (
+                        <div className="absolute top-full left-0 w-full mt-2 bg-neutral-900 border border-neutral-800 rounded-xl shadow-2xl z-20 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                            {templates.length > 0 ? (
+                                <div className="p-1">
+                                    {templates.map(t => (
+                                        <button
+                                            key={t.id}
+                                            onClick={() => applyTemplate(t.id)}
+                                            className="w-full text-left px-4 py-3 hover:bg-neutral-800 text-neutral-200 text-sm transition-colors rounded-lg flex flex-col"
+                                        >
+                                            <span className="font-medium">{t.name}</span>
+                                            <span className="text-xs text-neutral-500">{t.habitTitles.length} habits</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="p-4 text-center text-xs text-neutral-500">
+                                    No templates found. Create one in the Templates page.
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Habits List */}

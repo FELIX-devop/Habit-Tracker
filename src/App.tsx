@@ -4,7 +4,8 @@ import AnalyticsPage from './pages/AnalyticsPage';
 import AuthPage from './pages/AuthPage';
 import CalendarPage from './pages/CalendarPage';
 import DateHabitsPage from './pages/DateHabitsPage';
-import { LayoutList, BarChart3, LogOut, Calendar } from 'lucide-react';
+import TemplatesPage from './pages/TemplatesPage';
+import { LayoutList, BarChart3, LogOut, Calendar, Layers } from 'lucide-react';
 import clsx from 'clsx';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
@@ -39,6 +40,7 @@ function Layout() {
         </div>
         <nav className="flex items-center gap-1 bg-neutral-900/50 p-1 rounded-lg border border-neutral-800">
           <NavItem to="/calendar" icon={Calendar} label="Calendar" />
+          <NavItem to="/templates" icon={Layers} label="Templates" />
           <NavItem to="/tasks" icon={LayoutList} label="Tasks" />
           <NavItem to="/analytics" icon={BarChart3} label="Analytics" />
         </nav>
@@ -74,6 +76,7 @@ function App() {
             <Route path="/" element={<Navigate to="/calendar" replace />} />
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/habits/:date" element={<DateHabitsPage />} />
+            <Route path="/templates" element={<TemplatesPage />} />
             <Route path="/tasks" element={<TaskPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
           </Route>
