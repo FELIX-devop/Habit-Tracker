@@ -73,9 +73,9 @@ export default function CalendarPage() {
     const blanks = Array.from({ length: startDay === 0 ? 6 : startDay - 1 }, (_, i) => i);
 
     return (
-        <div className="p-4 sm:p-8 h-full flex flex-col max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32 sm:pb-24">
+        <div className="p-4 sm:p-8 min-h-full flex flex-col max-w-5xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-700 pb-40 sm:pb-24 space-y-8 sm:space-y-10">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => navigate('/tasks')}
@@ -90,7 +90,7 @@ export default function CalendarPage() {
                 </div>
                 <button
                     onClick={handleGoToDate}
-                    className="px-6 py-3 rounded-xl glass hover:bg-[var(--surface-hover)] transition-all text-sm font-bold text-[var(--text-primary)] flex items-center justify-center gap-2"
+                    className="w-full sm:w-auto px-6 py-4 sm:py-3 rounded-xl glass hover:bg-[var(--surface-hover)] transition-all text-sm font-bold text-[var(--text-primary)] flex items-center justify-center gap-2"
                 >
                     <Search className="w-4 h-4" />
                     Jump to Date
@@ -98,16 +98,16 @@ export default function CalendarPage() {
             </div>
 
             {/* Calendar Container */}
-            <div className="premium-card glass sm:flex-1 flex flex-col min-h-0">
+            <div className="premium-card glass sm:flex-1 flex flex-col min-h-fit sm:min-h-0 relative z-10">
                 {/* Month Navigation */}
-                <div className="p-4 sm:p-6 border-b border-[var(--border)] flex flex-col sm:flex-row items-center justify-between gap-4 bg-[var(--surface-muted)]">
+                <div className="p-5 sm:p-6 border-b border-[var(--border)] flex flex-col sm:flex-row items-center justify-between gap-6 bg-[var(--surface-muted)]">
                     <div className="flex items-center gap-4">
-                        <h2 className="text-xl sm:text-2xl font-black text-[var(--text-primary)] whitespace-nowrap">
+                        <h2 className="text-2xl sm:text-2xl font-black text-[var(--text-primary)] whitespace-nowrap">
                             {monthNames[currentMonth]} <span className="text-[var(--text-secondary)] font-medium leading-none ml-1">{currentYear}</span>
                         </h2>
                     </div>
-                    <div className="flex gap-2 w-full sm:w-auto">
-                        <button onClick={handlePrevMonth} className="flex-1 sm:flex-none p-3 rounded-xl glass hover:bg-[var(--surface-hover)] transition-all text-[var(--text-primary)] flex justify-center">
+                    <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+                        <button onClick={handlePrevMonth} className="flex-1 sm:flex-none p-4 sm:p-3 rounded-xl glass hover:bg-[var(--surface-hover)] transition-all text-[var(--text-primary)] flex justify-center items-center">
                             <ChevronLeft className="w-5 h-5" />
                         </button>
                         <button
@@ -116,11 +116,11 @@ export default function CalendarPage() {
                                 setCurrentMonth(n.getMonth());
                                 setCurrentYear(n.getFullYear());
                             }}
-                            className="flex-1 sm:flex-none px-5 py-2 rounded-xl border border-indigo-500/20 bg-indigo-500/5 hover:bg-indigo-500/10 transition-all text-[10px] uppercase tracking-widest font-black text-indigo-500"
+                            className="flex-[1.5] sm:flex-none px-6 py-3 sm:py-2 rounded-xl border border-indigo-500/20 bg-indigo-500/5 hover:bg-indigo-500/10 transition-all text-xs sm:text-[10px] uppercase tracking-widest font-black text-indigo-500"
                         >
                             Today
                         </button>
-                        <button onClick={handleNextMonth} className="flex-1 sm:flex-none p-3 rounded-xl glass hover:bg-[var(--surface-hover)] transition-all text-[var(--text-primary)] flex justify-center">
+                        <button onClick={handleNextMonth} className="flex-1 sm:flex-none p-4 sm:p-3 rounded-xl glass hover:bg-[var(--surface-hover)] transition-all text-[var(--text-primary)] flex justify-center items-center">
                             <ChevronRight className="w-5 h-5" />
                         </button>
                     </div>
@@ -183,7 +183,7 @@ export default function CalendarPage() {
             </div>
 
             {/* Quick Actions Footer */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-12 sm:mt-8 pb-10 sm:pb-0">
                 <button
                     onClick={() => navigate(`/habits/${getLocalDateString(new Date())}`)}
                     className="p-6 premium-card bg-gradient-to-br from-indigo-500/10 to-transparent flex items-center gap-6 group"
