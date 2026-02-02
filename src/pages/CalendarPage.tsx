@@ -5,14 +5,17 @@ import clsx from 'clsx';
 
 export default function CalendarPage() {
     const navigate = useNavigate();
-    const today = new Date();
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const [currentMonth, setCurrentMonth] = useState(today.getMonth());
     const [currentYear, setCurrentYear] = useState(today.getFullYear());
+
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
     const daysInMonth = (month: number, year: number) => new Date(year, month + 1, 0).getDate();
     const firstDayOfMonth = (month: number, year: number) => new Date(year, month, 1).getDay();
 
-    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    // Note: View-only constants removed to prevent staleness. Logic moved inside component.
 
     const handlePrevMonth = () => {
         if (currentMonth === 0) {
@@ -97,20 +100,20 @@ export default function CalendarPage() {
             {/* Calendar Container */}
             <div className="premium-card glass flex-1 flex flex-col min-h-0 overflow-hidden">
                 {/* Month Navigation */}
-                <div className="p-6 border-b border-[var(--border)] flex items-center justify-between bg-[var(--surface-muted)]">
+                <div className="p-4 sm:p-6 border-b border-[var(--border)] flex flex-col sm:flex-row items-center justify-between gap-4 bg-[var(--surface-muted)]">
                     <div className="flex items-center gap-4">
                         <h2 className="text-xl sm:text-2xl font-black text-[var(--text-primary)] whitespace-nowrap">
                             {monthNames[currentMonth]} <span className="text-[var(--text-secondary)] font-medium leading-none ml-1">{currentYear}</span>
                         </h2>
                     </div>
-                    <div className="flex gap-2">
-                        <button onClick={handlePrevMonth} className="p-3 rounded-xl glass hover:bg-[var(--surface-hover)] transition-all text-[var(--text-primary)]">
+                    <div className="flex gap-2 w-full sm:w-auto">
+                        <button onClick={handlePrevMonth} className="flex-1 sm:flex-none p-3 rounded-xl glass hover:bg-[var(--surface-hover)] transition-all text-[var(--text-primary)] flex justify-center">
                             <ChevronLeft className="w-5 h-5" />
                         </button>
-                        <button onClick={() => { setCurrentMonth(today.getMonth()); setCurrentYear(today.getFullYear()); }} className="px-5 py-2 rounded-xl border border-indigo-500/20 bg-indigo-500/5 hover:bg-indigo-500/10 transition-all text-[10px] uppercase tracking-widest font-black text-indigo-500">
+                        <button onClick={() => { setCurrentMonth(today.getMonth()); setCurrentYear(today.getFullYear()); }} className="flex-1 sm:flex-none px-5 py-2 rounded-xl border border-indigo-500/20 bg-indigo-500/5 hover:bg-indigo-500/10 transition-all text-[10px] uppercase tracking-widest font-black text-indigo-500">
                             Today
                         </button>
-                        <button onClick={handleNextMonth} className="p-3 rounded-xl glass hover:bg-[var(--surface-hover)] transition-all text-[var(--text-primary)]">
+                        <button onClick={handleNextMonth} className="flex-1 sm:flex-none p-3 rounded-xl glass hover:bg-[var(--surface-hover)] transition-all text-[var(--text-primary)] flex justify-center">
                             <ChevronRight className="w-5 h-5" />
                         </button>
                     </div>
@@ -118,9 +121,10 @@ export default function CalendarPage() {
 
                 {/* Weekday Names */}
                 <div className="grid grid-cols-7 border-b border-[var(--border)] bg-[var(--surface-muted)]">
-                    {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(d => (
-                        <div key={d} className="p-4 text-center text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-[0.2em] border-r border-[var(--border)] last:border-0">
-                            {d}
+                    {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((d) => (
+                        <div key={d} className="p-2 sm:p-4 text-center text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-[0.1em] sm:tracking-[0.2em] border-r border-[var(--border)] last:border-0">
+                            <span className="hidden sm:inline">{d}</span>
+                            <span className="sm:hidden">{d[0]}</span>
                         </div>
                     ))}
                 </div>
@@ -138,9 +142,9 @@ export default function CalendarPage() {
                                     key={day}
                                     onClick={() => handleDateClick(day)}
                                     className={clsx(
-                                        "aspect-square sm:aspect-auto sm:min-h-[120px] p-4 border-r border-b border-[var(--border)] text-left transition-all relative group flex flex-col gap-1",
-                                        "hover:bg-indigo-500/5 last:border-r-0",
-                                        isToday ? "bg-indigo-500/[0.03]" : ""
+                                        "aspect-square sm:aspect-auto sm:min-h-[120px] p-2 sm:p-4 border-r border-b border-[var(--border)] text-left transition-all relative group flex flex-col gap-1",
+                                        "hover:bg-indigo-500/5 last:border-r-0 focus:outline-none touch-manipulation",
+                                        isToday ? "bg-indigo-500/[0.05]" : ""
                                     )}
                                 >
                                     <span className={clsx(

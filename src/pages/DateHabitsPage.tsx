@@ -27,17 +27,23 @@ export default function DateHabitsPage() {
     };
 
     const getSelectedDate = () => {
-        if (!date) return new Date();
+        if (!date) {
+            const d = new Date();
+            return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        }
         const [year, month, day] = date.split('-').map(Number);
         return new Date(year, month - 1, day);
     };
 
     const selectedDate = getSelectedDate();
     const dateStr = getLocalDateString(selectedDate);
-    const today = new Date();
+
+    // Normalize "today" to start of day for comparison
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const todayStr = getLocalDateString(today);
 
-    const isPast = selectedDate.getTime() < new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+    const isPast = selectedDate.getTime() < today.getTime();
     const isToday = dateStr === todayStr;
 
     useEffect(() => {
@@ -177,7 +183,7 @@ export default function DateHabitsPage() {
                     <h1 className="text-2xl sm:text-4xl font-black text-[var(--text-primary)] tracking-tight">
                         {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                     </h1>
-                    <p className="text-[var(--text-secondary)] text-sm font-bold uppercase tracking-widest mt-1">
+                    <p className="text-[var(--text-secondary)] text-[10px] sm:text-sm font-bold uppercase tracking-widest mt-1">
                         {isToday ? "Make today count" : isPast ? "Historical Archives" : "Upcoming Protocol"}
                     </p>
                 </div>

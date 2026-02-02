@@ -22,8 +22,6 @@ const getDaysOfWeek = () => {
     return dates;
 };
 
-const DAYS = getDaysOfWeek();
-const TODAY_STR = new Date().toDateString(); // For UI highlighting
 const getLocalDateString = (d: Date) => {
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -31,7 +29,7 @@ const getLocalDateString = (d: Date) => {
     return `${year}-${month}-${day}`;
 };
 
-const TODAY_ISO = getLocalDateString(new Date()); // For strict API validation
+// Note: TODAY_ISO is now calculated inside the component to prevent staleness
 
 export default function TaskPage() {
     const isMobile = useIsMobile();
@@ -40,6 +38,15 @@ export default function TaskPage() {
     const [loading, setLoading] = useState(true);
     const [adding, setAdding] = useState(false);
     const [newHabitName, setNewHabitName] = useState('');
+
+    // Calculate today's date on every render/action to avoid midnight bugs
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayISO = getLocalDateString(today);
+    const todayStr = today.toDateString();
+
+    // Get weekly days inside component to ensure they refresh at midnight
+    const daysOfWeek = getDaysOfWeek();
 
     useEffect(() => {
         fetchHabits();
@@ -56,11 +63,11 @@ export default function TaskPage() {
 
     const toggleHabit = async (id: string, dateObj: Date) => {
         const dateStrKey = getLocalDateString(dateObj);
-        if (dateStrKey > TODAY_ISO) {
+        if (dateStrKey > todayISO) {
             alert("Cannot update future dates!");
             return;
         }
-        if (dateStrKey !== TODAY_ISO) {
+        if (dateStrKey !== todayISO) {
             alert("You can only update the status for TODAY. Past dates are read-only.");
             return;
         }
@@ -126,8 +133,8 @@ export default function TaskPage() {
         onSetAdding: setAdding,
         onSetNewHabitName: setNewHabitName,
         onNavigate: navigate,
-        DAYS,
-        TODAY_STR,
+        DAYS: daysOfWeek,
+        TODAY_STR: todayStr,
         getLocalDateString
     };
 
