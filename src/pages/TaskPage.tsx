@@ -122,17 +122,66 @@ export default function TaskPage() {
 
     return (
         <div className="p-8 h-full flex flex-col max-w-6xl mx-auto animate-in fade-in duration-500">
-            <div className="flex items-center justify-between mb-8">
-                <div>
-                    <h1 className="text-3xl font-semibold text-white tracking-tight">Weekly Focus</h1>
-                    <p className="text-neutral-500 mt-1">Track your consistency.</p>
-                </div>
+            {/* Dashboard Header */}
+            <div className="mb-6">
+                <h1 className="text-3xl font-semibold text-white tracking-tight">Weekly Focus</h1>
+                <p className="text-neutral-500 mt-1">Track your consistency.</p>
+            </div>
+
+            {/* Dashboard Action Panel */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                {/* Add Habit */}
                 <button
                     onClick={() => setAdding(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-neutral-100 text-neutral-900 rounded-lg hover:bg-white transition-all font-medium text-sm shadow-sm hover:shadow-md active:scale-95"
+                    className="flex items-center gap-3 p-4 bg-gradient-to-br from-blue-600/20 to-blue-800/20 border border-blue-600/30 rounded-xl hover:from-blue-600/30 hover:to-blue-800/30 transition-all group"
                 >
-                    <Plus className="w-4 h-4" />
-                    <span>New Habit</span>
+                    <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Plus className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="text-left">
+                        <div className="text-white font-medium">Add Habit</div>
+                        <div className="text-blue-300 text-sm">Create new habit</div>
+                    </div>
+                </button>
+
+                {/* Remove Habit */}
+                <button
+                    onClick={() => {
+                        if (habits.length === 0) {
+                            alert("No habits to remove");
+                            return;
+                        }
+                        const habitNames = habits.map((h, i) => `${i + 1}. ${h.title}`).join('\n');
+                        alert(`Hover over any habit in the list below and click the trash icon to delete it.\n\nYour habits:\n${habitNames}`);
+                    }}
+                    className="flex items-center gap-3 p-4 bg-gradient-to-br from-red-600/20 to-red-800/20 border border-red-600/30 rounded-xl hover:from-red-600/30 hover:to-red-800/30 transition-all group"
+                >
+                    <div className="w-10 h-10 rounded-lg bg-red-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Trash2 className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="text-left">
+                        <div className="text-white font-medium">Remove Habit</div>
+                        <div className="text-red-300 text-sm">Delete existing habit</div>
+                    </div>
+                </button>
+
+                {/* Go To Date */}
+                <button
+                    onClick={() => {
+                        const dateInput = prompt("Enter date (YYYY-MM-DD):", TODAY_ISO);
+                        if (dateInput) {
+                            alert(`Date navigation will be available in the Calendar feature (Feature 3).\nYou entered: ${dateInput}`);
+                        }
+                    }}
+                    className="flex items-center gap-3 p-4 bg-gradient-to-br from-purple-600/20 to-purple-800/20 border border-purple-600/30 rounded-xl hover:from-purple-600/30 hover:to-purple-800/30 transition-all group"
+                >
+                    <div className="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Check className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="text-left">
+                        <div className="text-white font-medium">Go To Date</div>
+                        <div className="text-purple-300 text-sm">Jump to specific date</div>
+                    </div>
                 </button>
             </div>
 
