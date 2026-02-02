@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Check, Loader2, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Check, Loader2, Trash2, Calendar, Layers } from 'lucide-react';
 import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import api from '../api/api';
@@ -31,6 +32,7 @@ interface Habit {
 }
 
 export default function TaskPage() {
+    const navigate = useNavigate();
     const [habits, setHabits] = useState<Habit[]>([]);
     const [loading, setLoading] = useState(true);
     const [adding, setAdding] = useState(false);
@@ -139,48 +141,36 @@ export default function TaskPage() {
                         <Plus className="w-5 h-5 text-white" />
                     </div>
                     <div className="text-left">
-                        <div className="text-white font-medium">Add Habit</div>
-                        <div className="text-blue-300 text-sm">Create new habit</div>
+                        <div className="font-semibold text-white">Add Habit</div>
+                        <div className="text-xs text-neutral-500">Add a new goal</div>
                     </div>
                 </button>
 
-                {/* Remove Habit */}
+                {/* Templates */}
                 <button
-                    onClick={() => {
-                        if (habits.length === 0) {
-                            alert("No habits to remove");
-                            return;
-                        }
-                        const habitNames = habits.map((h, i) => `${i + 1}. ${h.title}`).join('\n');
-                        alert(`Hover over any habit in the list below and click the trash icon to delete it.\n\nYour habits:\n${habitNames}`);
-                    }}
-                    className="flex items-center gap-3 p-4 bg-gradient-to-br from-red-600/20 to-red-800/20 border border-red-600/30 rounded-xl hover:from-red-600/30 hover:to-red-800/30 transition-all group"
-                >
-                    <div className="w-10 h-10 rounded-lg bg-red-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Trash2 className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="text-left">
-                        <div className="text-white font-medium">Remove Habit</div>
-                        <div className="text-red-300 text-sm">Delete existing habit</div>
-                    </div>
-                </button>
-
-                {/* Go To Date */}
-                <button
-                    onClick={() => {
-                        const dateInput = prompt("Enter date (YYYY-MM-DD):", TODAY_ISO);
-                        if (dateInput) {
-                            alert(`Date navigation will be available in the Calendar feature (Feature 3).\nYou entered: ${dateInput}`);
-                        }
-                    }}
+                    onClick={() => navigate('/templates')}
                     className="flex items-center gap-3 p-4 bg-gradient-to-br from-purple-600/20 to-purple-800/20 border border-purple-600/30 rounded-xl hover:from-purple-600/30 hover:to-purple-800/30 transition-all group"
                 >
                     <div className="w-10 h-10 rounded-lg bg-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Check className="w-5 h-5 text-white" />
+                        <Layers className="w-5 h-5 text-white" />
                     </div>
                     <div className="text-left">
-                        <div className="text-white font-medium">Go To Date</div>
-                        <div className="text-purple-300 text-sm">Jump to specific date</div>
+                        <div className="font-semibold text-white">Templates</div>
+                        <div className="text-xs text-neutral-500">Grouped routines</div>
+                    </div>
+                </button>
+
+                {/* Calendar */}
+                <button
+                    onClick={() => navigate('/calendar')}
+                    className="flex items-center gap-3 p-4 bg-gradient-to-br from-emerald-600/20 to-emerald-800/20 border border-emerald-600/30 rounded-xl hover:from-emerald-600/30 hover:to-emerald-800/30 transition-all group"
+                >
+                    <div className="w-10 h-10 rounded-lg bg-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Calendar className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="text-left">
+                        <div className="font-semibold text-white">Calendar</div>
+                        <div className="text-xs text-neutral-500">Go to specific date</div>
                     </div>
                 </button>
             </div>
