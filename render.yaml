@@ -2,10 +2,10 @@ services:
   # Backend Service
   - type: web
     name: habit-tracker-backend
-    env: java
+    runtime: java
     rootDir: backend
     buildCommand: ./mvnw clean package -DskipTests
-    startCommand: java -jar backend/target/*.jar
+    startCommand: java -jar target/*.jar
     envVars:
       - key: MONGODB_URI
         sync: false
